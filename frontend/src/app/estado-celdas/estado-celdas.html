@@ -1,0 +1,85 @@
+<section class="management" aria-labelledby="cells-status-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">ESTADO DEL PARQUEADERO</span>
+      <h1 id="cells-status-title">Celdas</h1>
+      <p>Consulta qué celdas están disponibles y cuáles están ocupadas.</p>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
+  </header>
+  <div class="summary">
+    <article class="card">
+      <span class="card-label">Disponibles</span>
+      <strong class="card-value available" data-testid="disponibles">{{ disponibles() }}</strong>
+    </article>
+    <article class="card">
+      <span class="card-label">Ocupadas</span>
+      <strong class="card-value occupied" data-testid="ocupadas">{{ ocupadas() }}</strong>
+    </article>
+  </div>
+  <section class="panel" aria-label="Estado de las celdas" [attr.aria-busy]="loading()">
+    <h2>
+      Celdas <span class="count">{{ total() }}</span>
+    </h2>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando celdas…</p>
+    } @else if (error()) {
+      <p class="notice error" role="alert">{{ error() }}</p>
+    } @else if (!items().length) {
+      <p class="empty">No hay celdas registradas.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">
+            Estado de las celdas
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cell of items(); track cell.id) {
+              <tr>
+                <th scope="row">{{ cell.codigo }}</th>
+                <td>{{ cell.tipo }}</td>
+                <td>
+                  <span
+                    class="tag"
+                    [class.available]="cell.estado === 'DISPONIBLE'"
+                    [class.occupied]="cell.estado === 'OCUPADA'"
+                    >{{ cell.estado }}</span
+                  >
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (pages() > 1) {
+      <nav class="pagination" aria-label="Paginación de celdas">
+        <span>Página {{ page() }} de {{ pages() }}</span>
+        <div class="actions">
+          <button
+            type="button"
+            (click)="load(offset() - limit)"
+            [disabled]="loading() || offset() === 0"
+          >
+            Anterior</button
+          ><button
+            type="button"
+            (click)="load(offset() + limit)"
+            [disabled]="loading() || offset() + limit >= total()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </nav>
+    }
+  </section>
+</section>
