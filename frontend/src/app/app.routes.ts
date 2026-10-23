@@ -28,5 +28,10 @@ export const routes: Routes = [
     title: 'Celdas | Autos Colombia',
     loadComponent: () => import('./estado-celdas/estado-celdas').then((m) => m.EstadoCeldas),
   },
+  {
+    path: 'dentro',
+    title: 'Dentro | Autos Colombia',
+    loadComponent: () => import('./dentro/dentro').then((m) => m.Dentro),
+  },
   { path: '**', redirectTo: '' },
 ];

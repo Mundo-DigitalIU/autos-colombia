@@ -1,0 +1,70 @@
+<section class="management" aria-labelledby="inside-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">ESTADO DEL PARQUEADERO</span>
+      <h1 id="inside-title">Vehículos dentro</h1>
+      <p>Vehículos con una estancia abierta. Horas en zona America/Bogota.</p>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
+  </header>
+  <section class="panel" aria-label="Vehículos dentro" [attr.aria-busy]="loading()">
+    <h2>
+      Dentro ahora <span class="count">{{ total() }}</span>
+    </h2>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando vehículos…</p>
+    } @else if (error()) {
+      <p class="notice error" role="alert">{{ error() }}</p>
+    } @else if (!items().length) {
+      <p class="empty">No hay vehículos dentro del parqueadero.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">
+            Vehículos dentro del parqueadero
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Placa</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Celda</th>
+              <th scope="col">Hora de entrada</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.estancia_id) {
+              <tr>
+                <th scope="row">{{ item.placa }}</th>
+                <td>{{ item.tipo }}</td>
+                <td>{{ item.celda_codigo }}</td>
+                <td>{{ fecha(item.entrada) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (pages() > 1) {
+      <nav class="pagination" aria-label="Paginación de vehículos dentro">
+        <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+        <div class="actions">
+          <button
+            type="button"
+            (click)="load(offset() - limit)"
+            [disabled]="loading() || offset() === 0"
+          >
+            Anterior</button
+          ><button
+            type="button"
+            (click)="load(offset() + limit)"
+            [disabled]="loading() || offset() + limit >= total()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </nav>
+    }
+  </section>
+</section>
