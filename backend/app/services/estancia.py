@@ -1,17 +1,36 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.models import Celda, Estancia, Operador, Vehiculo, required_text
 from app.schemas.celda import CeldaRespuesta
 from app.schemas.estancia import (
     EntradaCrear, SalidaCrear, EstanciaRespuesta, EstanciaAbiertaRespuesta,
     EstadoVehiculoRespuesta, VehiculoDentroRespuesta, VehiculosDentroPagina,
+    EstanciaHistorialRespuesta, HistorialPagina,
 )
 from app.schemas.vehiculo import VehiculoRespuesta
+
+
+# Colombia no usa horario de verano: su hora local es siempre UTC-5.
+ZONA_LOCAL = timezone(timedelta(hours=-5), "America/Bogota")
+
+
+def rango_entrada(desde: date | None, hasta: date | None) -> tuple[datetime | None, datetime | None]:
+    """Convierte fechas locales en límites UTC para filtrar por la entrada.
+
+    `desde` incluye todo ese día y `hasta` también: el límite superior es el inicio del día siguiente.
+    """
+    inicio = None
+    if desde is not None:
+        inicio = datetime.combine(desde, time.min, tzinfo=ZONA_LOCAL).astimezone(timezone.utc)
+    fin = None
+    if hasta is not None and hasta < date.max:
+        fin = datetime.combine(hasta + timedelta(days=1), time.min, tzinfo=ZONA_LOCAL).astimezone(timezone.utc)
+    return inicio, fin
 
 
 class EstanciaError(Exception):
@@ -144,6 +163,45 @@ class ServicioEstancia:
             for estancia, vehiculo, celda in filas
         ]
         return VehiculosDentroPagina(items=items, total=total, offset=offset, limit=limit)
+
+    @transaccion
+    def historial(self, placa: str | None, desde: date | None, hasta: date | None,
+                  offset: int, limit: int) -> HistorialPagina:
+        """Estancias de la más reciente a la más antigua, filtradas por placa y fecha de entrada."""
+        placa = (placa or "").strip().upper() or None
+        inicio, fin = rango_entrada(desde, hasta)
+        filtros = []
+        if placa is not None:
+            filtros.append(Vehiculo.placa == placa)
+        if inicio is not None:
+            filtros.append(Estancia.entrada >= inicio)
+        if fin is not None:
+            filtros.append(Estancia.entrada < fin)
+        total = self.session.scalar(
+            select(func.count()).select_from(Estancia)
+            .join(Vehiculo, Vehiculo.id == Estancia.vehiculo_id).where(*filtros)
+        )
+        op_entrada, op_salida = aliased(Operador), aliased(Operador)
+        filas = self.session.execute(
+            select(Estancia, Vehiculo, Celda, op_entrada, op_salida)
+            .join(Vehiculo, Vehiculo.id == Estancia.vehiculo_id)
+            .join(Celda, Celda.id == Estancia.celda_id)
+            .join(op_entrada, op_entrada.id == Estancia.operador_entrada_id)
+            .outerjoin(op_salida, op_salida.id == Estancia.operador_salida_id)
+            .where(*filtros)
+            .order_by(Estancia.entrada.desc(), Estancia.id.desc())
+            .offset(offset).limit(limit)
+        ).all()
+        items = [
+            EstanciaHistorialRespuesta(
+                estancia_id=estancia.id, placa=vehiculo.placa, celda_codigo=celda.codigo,
+                entrada=estancia.entrada, salida=estancia.salida,
+                operador_entrada=entrada_op.nombre,
+                operador_salida=salida_op.nombre if salida_op is not None else None,
+            )
+            for estancia, vehiculo, celda, entrada_op, salida_op in filas
+        ]
+        return HistorialPagina(items=items, total=total, offset=offset, limit=limit)
 
     @transaccion
     def consultar(self, placa: str) -> EstadoVehiculoRespuesta:

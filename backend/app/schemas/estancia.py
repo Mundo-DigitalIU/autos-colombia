@@ -63,6 +63,28 @@ class VehiculosDentroPagina(BaseModel):
     limit: int
 
 
+class EstanciaHistorialRespuesta(BaseModel):
+    estancia_id: int
+    placa: str
+    celda_codigo: str
+    entrada: datetime
+    salida: datetime | None
+    operador_entrada: str
+    operador_salida: str | None
+
+    @field_validator("entrada", "salida")
+    @classmethod
+    def fechas_utc(cls, value: datetime | None) -> datetime | None:
+        return value.astimezone(timezone.utc) if value is not None else None
+
+
+class HistorialPagina(BaseModel):
+    items: list[EstanciaHistorialRespuesta]
+    total: int
+    offset: int
+    limit: int
+
+
 class EstadoVehiculoRespuesta(BaseModel):
     vehiculo: VehiculoRespuesta
     esta_dentro: bool
