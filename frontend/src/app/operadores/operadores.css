@@ -15,7 +15,7 @@
 .eyebrow {
   font-size: 11px;
   letter-spacing: 2px;
-  color: #526c60;
+  color: #5a6480;
   font-weight: 700;
 }
 h1 {
@@ -28,12 +28,12 @@ h2 {
   margin: 0;
 }
 p {
-  color: #586b60;
+  color: #5a6480;
   line-height: 1.6;
 }
 .panel {
   padding: 26px;
-  border: 1px solid #dce2dc;
+  border: 1px solid #dcdfe8;
   background: #fff;
   border-radius: 16px;
   margin-bottom: 24px;
@@ -49,30 +49,30 @@ select {
 }
 button {
   padding: 10px 14px;
-  border: 1px solid #c9d7ce;
-  color: #214c43;
+  border: 1px solid #c9cfdd;
+  color: #2c3e63;
   background: #fff;
   cursor: pointer;
   font-size: 14px;
 }
 button:hover:not(:disabled) {
-  background: #eef3ee;
+  background: #e7eaf3;
 }
 button.primary {
-  background: #214c43;
+  background: #2c3e63;
   color: white;
-  border-color: #214c43;
+  border-color: #2c3e63;
 }
 button.primary:hover:not(:disabled) {
-  background: #163d34;
+  background: #1f2d4b;
 }
 button.danger {
-  background: #a03930;
+  background: #8f3a2c;
   color: white;
-  border-color: #a03930;
+  border-color: #8f3a2c;
 }
 button.delete-link {
-  color: #a03930;
+  color: #8f3a2c;
 }
 button:disabled {
   opacity: 0.5;
@@ -81,7 +81,7 @@ button:disabled {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 3px solid #aa7b2e;
+  outline: 3px solid #9a5b2d;
   outline-offset: 3px;
 }
 fieldset {
@@ -108,17 +108,17 @@ label {
 input,
 select {
   padding: 11px 12px;
-  border: 1px solid #b9c9bd;
+  border: 1px solid #c9cfdd;
   background: #fff;
   width: 100%;
-  color: #203a33;
+  color: #1f2a44;
 }
 [aria-invalid='true'] {
-  border-color: #a03930;
+  border-color: #8f3a2c;
 }
 .field-error {
   font-size: 12px;
-  color: #a03930;
+  color: #8f3a2c;
   min-height: 16px;
 }
 .actions {
@@ -133,11 +133,11 @@ select {
 }
 .success {
   background: #e6f1e8;
-  color: #246044;
+  color: #1f6350;
 }
 .error {
   background: #fff0ec;
-  color: #923b2e;
+  color: #8f3a2c;
 }
 .confirmation {
   border-color: #d4a899;
@@ -148,7 +148,7 @@ select {
 }
 .count {
   margin-left: 8px;
-  background: #eef3ee;
+  background: #e7eaf3;
   padding: 3px 9px;
   border-radius: 15px;
   font-size: 13px;
@@ -165,14 +165,14 @@ table {
 th,
 td {
   padding: 16px 12px;
-  border-bottom: 1px solid #e6ebe5;
+  border-bottom: 1px solid #e5e7ee;
   overflow-wrap: anywhere;
   max-width: 240px;
 }
 thead th {
-  color: #5d7063;
+  color: #6b7490;
   font-weight: 500;
-  background: #f6f8f4;
+  background: #f4f6fa;
   white-space: nowrap;
 }
 .row-actions {
@@ -185,14 +185,14 @@ thead th {
 .type-tag {
   font-size: 11px;
   color: #365c4e;
-  background: #eef3ee;
+  background: #e7eaf3;
   padding: 5px 8px;
   border-radius: 6px;
 }
 .pagination {
   margin-top: 24px;
   font-size: 13px;
-  color: #586b60;
+  color: #5a6480;
 }
 .empty {
   padding: 32px 0;

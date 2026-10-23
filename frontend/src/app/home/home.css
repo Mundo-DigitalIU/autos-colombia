@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  border-bottom: 1px solid #dce2dc;
+  border-bottom: 1px solid #dcdfe8;
 }
 .brand {
   display: inline-flex;
@@ -29,7 +29,7 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: #214c43;
+  background: #2c3e63;
   color: #fff;
   font-size: 14px;
   letter-spacing: -1px;
@@ -46,7 +46,7 @@
   padding: 84px 0 76px;
 }
 .eyebrow {
-  color: #526c60;
+  color: #5a6480;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
@@ -68,7 +68,7 @@ h1 {
 .supporting-copy {
   max-width: 405px;
   margin: 22px 0 0;
-  color: #627168;
+  color: #6b7490;
   font-size: 15px;
   line-height: 1.8;
 }
@@ -90,12 +90,12 @@ h1 {
   align-items: center;
   gap: 9px;
   margin: 18px 0 0;
-  color: #627168;
+  color: #6b7490;
   font-size: 13px;
   line-height: 1.5;
 }
 .connection-status.available {
-  color: #246044;
+  color: #1f6350;
 }
 .connection-status.unavailable {
   color: #a23b30;
@@ -123,8 +123,8 @@ h1 {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(#214c4308 1px, transparent 1px),
-    linear-gradient(90deg, #214c4308 1px, transparent 1px);
+    linear-gradient(#2c3e6308 1px, transparent 1px),
+    linear-gradient(90deg, #2c3e6308 1px, transparent 1px);
   background-size: 32px 32px;
 }
 .parking-label,
@@ -145,7 +145,7 @@ svg {
 .illustration-caption {
   margin-bottom: 28px;
   font-size: 12px;
-  color: #526c60;
+  color: #5a6480;
 }
 .overview {
   padding-bottom: 68px;
@@ -162,7 +162,7 @@ h2 {
 .section-heading p {
   margin: 8px 0 0;
   font-size: 14px;
-  color: #627168;
+  color: #6b7490;
 }
 .feature-grid {
   display: grid;
@@ -172,7 +172,7 @@ h2 {
 .feature {
   padding: 25px;
   background: #fff;
-  border: 1px solid #e0e5de;
+  border: 1px solid #dcdfe8;
   border-radius: 14px;
 }
 .feature-number {
@@ -187,7 +187,7 @@ h3 {
 }
 .feature p {
   margin: 0;
-  color: #627168;
+  color: #6b7490;
   font-size: 14px;
   line-height: 1.7;
 }
@@ -196,9 +196,9 @@ h3 {
   justify-content: space-between;
   gap: 16px;
   padding: 24px 0;
-  border-top: 1px solid #dce2dc;
+  border-top: 1px solid #dcdfe8;
   font-size: 12px;
-  color: #627168;
+  color: #6b7490;
 }
 @media (max-width: 760px) {
   .page-shell {
