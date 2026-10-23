@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from functools import wraps
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -9,7 +9,7 @@ from app.models import Celda, Estancia, Operador, Vehiculo, required_text
 from app.schemas.celda import CeldaRespuesta
 from app.schemas.estancia import (
     EntradaCrear, SalidaCrear, EstanciaRespuesta, EstanciaAbiertaRespuesta,
-    EstadoVehiculoRespuesta,
+    EstadoVehiculoRespuesta, VehiculoDentroRespuesta, VehiculosDentroPagina,
 )
 from app.schemas.vehiculo import VehiculoRespuesta
 
@@ -124,6 +124,26 @@ class ServicioEstancia:
             raise EstanciaError(409, "No se puede cerrar la estancia con su estado o fecha actuales.") from None
         self.session.flush()
         return EstanciaRespuesta.model_validate(estancia)
+
+    @transaccion
+    def dentro(self, offset: int, limit: int) -> VehiculosDentroPagina:
+        """Vehículos con una estancia abierta, de la entrada más antigua a la más reciente."""
+        abiertas = Estancia.salida.is_(None)
+        total = self.session.scalar(select(func.count()).select_from(Estancia).where(abiertas))
+        filas = self.session.execute(
+            select(Estancia, Vehiculo, Celda)
+            .join(Vehiculo, Vehiculo.id == Estancia.vehiculo_id)
+            .join(Celda, Celda.id == Estancia.celda_id)
+            .where(abiertas)
+            .order_by(Estancia.entrada, Estancia.id)
+            .offset(offset).limit(limit)
+        ).all()
+        items = [
+            VehiculoDentroRespuesta(estancia_id=estancia.id, placa=vehiculo.placa, tipo=vehiculo.tipo,
+                                    celda_codigo=celda.codigo, entrada=estancia.entrada)
+            for estancia, vehiculo, celda in filas
+        ]
+        return VehiculosDentroPagina(items=items, total=total, offset=offset, limit=limit)
 
     @transaccion
     def consultar(self, placa: str) -> EstadoVehiculoRespuesta:

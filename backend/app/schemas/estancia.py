@@ -43,6 +43,26 @@ class EstanciaAbiertaRespuesta(EstanciaRespuesta):
     celda: CeldaRespuesta
 
 
+class VehiculoDentroRespuesta(BaseModel):
+    estancia_id: int
+    placa: str
+    tipo: str
+    celda_codigo: str
+    entrada: datetime
+
+    @field_validator("entrada")
+    @classmethod
+    def entrada_utc(cls, value: datetime) -> datetime:
+        return value.astimezone(timezone.utc)
+
+
+class VehiculosDentroPagina(BaseModel):
+    items: list[VehiculoDentroRespuesta]
+    total: int
+    offset: int
+    limit: int
+
+
 class EstadoVehiculoRespuesta(BaseModel):
     vehiculo: VehiculoRespuesta
     esta_dentro: bool

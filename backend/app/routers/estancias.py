@@ -1,10 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_session
-from app.schemas.estancia import EntradaCrear, SalidaCrear, EstanciaRespuesta, EstadoVehiculoRespuesta
+from app.schemas.estancia import (
+    EntradaCrear, SalidaCrear, EstanciaRespuesta, EstadoVehiculoRespuesta, VehiculosDentroPagina,
+)
 from app.schemas.vehiculo import Placa
 from app.services.estancia import ServicioEstancia
 
@@ -20,6 +22,15 @@ def entrada(data: EntradaCrear, session: DatabaseSession) -> EstanciaRespuesta:
 @router.post("/salida", response_model=EstanciaRespuesta)
 def salida(data: SalidaCrear, session: DatabaseSession) -> EstanciaRespuesta:
     return ServicioEstancia(session).salida(data)
+
+
+@router.get("/dentro", response_model=VehiculosDentroPagina)
+def dentro(
+    session: DatabaseSession,
+    offset: Annotated[int, Query(ge=0, le=9223372036854775807)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> VehiculosDentroPagina:
+    return ServicioEstancia(session).dentro(offset, limit)
 
 
 @router.get("/vehiculo/{placa}", response_model=EstadoVehiculoRespuesta)
