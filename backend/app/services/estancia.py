@@ -10,7 +10,7 @@ from app.schemas.celda import CeldaRespuesta
 from app.schemas.estancia import (
     EntradaCrear, SalidaCrear, EstanciaRespuesta, EstanciaAbiertaRespuesta,
     EstadoVehiculoRespuesta, VehiculoDentroRespuesta, VehiculosDentroPagina,
-    EstanciaHistorialRespuesta, HistorialPagina,
+    EstanciaHistorialRespuesta, HistorialPagina, CeldaEstadoRespuesta, CeldasEstadoPagina,
 )
 from app.schemas.vehiculo import VehiculoRespuesta
 
@@ -202,6 +202,25 @@ class ServicioEstancia:
             for estancia, vehiculo, celda, entrada_op, salida_op in filas
         ]
         return HistorialPagina(items=items, total=total, offset=offset, limit=limit)
+
+    @transaccion
+    def celdas(self, offset: int, limit: int) -> CeldasEstadoPagina:
+        """Celdas con su estado: la celda está ocupada si tiene una estancia abierta."""
+        ocupada = select(Estancia.id).where(
+            Estancia.celda_id == Celda.id, Estancia.salida.is_(None)
+        ).correlate(Celda).exists()
+        total = self.session.scalar(select(func.count()).select_from(Celda))
+        ocupadas = self.session.scalar(select(func.count()).select_from(Celda).where(ocupada))
+        filas = self.session.execute(
+            select(Celda, ocupada.label("ocupada")).order_by(Celda.id).offset(offset).limit(limit)
+        ).all()
+        items = [
+            CeldaEstadoRespuesta(id=celda.id, codigo=celda.codigo, tipo=celda.tipo,
+                                 estado="OCUPADA" if esta_ocupada else "DISPONIBLE")
+            for celda, esta_ocupada in filas
+        ]
+        return CeldasEstadoPagina(items=items, total=total, disponibles=total - ocupadas,
+                                  ocupadas=ocupadas, offset=offset, limit=limit)
 
     @transaccion
     def consultar(self, placa: str) -> EstadoVehiculoRespuesta:

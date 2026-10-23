@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -81,6 +81,22 @@ class EstanciaHistorialRespuesta(BaseModel):
 class HistorialPagina(BaseModel):
     items: list[EstanciaHistorialRespuesta]
     total: int
+    offset: int
+    limit: int
+
+
+class CeldaEstadoRespuesta(BaseModel):
+    id: int
+    codigo: str
+    tipo: str
+    estado: Literal["DISPONIBLE", "OCUPADA"]
+
+
+class CeldasEstadoPagina(BaseModel):
+    items: list[CeldaEstadoRespuesta]
+    total: int
+    disponibles: int
+    ocupadas: int
     offset: int
     limit: int
 
