@@ -12,7 +12,8 @@ Identificador = Annotated[int, Field(strict=True, ge=1, le=9223372036854775807)]
 class EntradaCrear(BaseModel):
     model_config = ConfigDict(extra="forbid")
     placa: Placa
-    celda_id: Identificador
+    # Si no se envía, el servicio asigna una celda libre del mismo tipo del vehículo.
+    celda_id: Identificador | None = None
     operador_id: Identificador
 
 

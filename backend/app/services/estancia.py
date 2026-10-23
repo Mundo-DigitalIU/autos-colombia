@@ -63,18 +63,41 @@ class ServicioEstancia:
             raise EstanciaError(404, "Operador no encontrado.")
         return operador
 
+    def _celda_libre(self, tipo: str) -> Celda:
+        """Primera celda del tipo indicado sin estancia abierta.
+
+        SKIP LOCKED evita que dos entradas simultáneas elijan la misma celda; el
+        índice único de estancias abiertas sigue siendo la garantía final.
+        """
+        ocupada = select(Estancia.id).where(
+            Estancia.celda_id == Celda.id, Estancia.salida.is_(None)
+        ).correlate(Celda).exists()
+        celda = self.session.scalar(
+            select(Celda).where(Celda.tipo == tipo, ~ocupada)
+            .order_by(Celda.id).limit(1)
+            .with_for_update(skip_locked=True, of=Celda)
+        )
+        if celda is None:
+            raise EstanciaError(409, "No hay celdas disponibles para este tipo de vehículo.")
+        return celda
+
     @transaccion
     def entrada(self, data: EntradaCrear) -> EstanciaRespuesta:
         vehiculo = self._vehiculo(data.placa)
-        celda = self.session.get(Celda, data.celda_id)
-        if celda is None:
-            raise EstanciaError(404, "Celda no encontrada.")
+        celda = None
+        if data.celda_id is not None:
+            celda = self.session.get(Celda, data.celda_id)
+            if celda is None:
+                raise EstanciaError(404, "Celda no encontrada.")
         operador = self._operador(data.operador_id)
         if self.session.scalar(select(Estancia.id).where(
             Estancia.vehiculo_id == vehiculo.id, Estancia.salida.is_(None)
         )) is not None:
             raise EstanciaError(409, "El vehículo ya está dentro.")
-        if self.session.scalar(select(Estancia.id).where(
+        if celda is None:
+            # RF-05: sin celda indicada, el sistema asigna una libre del mismo tipo del vehículo.
+            celda = self._celda_libre(vehiculo.tipo)
+        elif self.session.scalar(select(Estancia.id).where(
             Estancia.celda_id == celda.id, Estancia.salida.is_(None)
         )) is not None:
             raise EstanciaError(409, "La celda está ocupada.")
