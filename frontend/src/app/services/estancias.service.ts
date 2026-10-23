@@ -1,9 +1,18 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { EMPTY, Observable, expand, reduce, throwError, timeout } from 'rxjs';
 import { Celda } from '../models/celda';
 import { Operador } from '../models/operador';
-import { EntradaCrear, SalidaCrear, Estancia, EstadoVehiculo } from '../models/estancia';
+import {
+  CeldasEstadoPagina,
+  DentroPagina,
+  EntradaCrear,
+  Estancia,
+  EstadoVehiculo,
+  FiltrosHistorial,
+  HistorialPagina,
+  SalidaCrear,
+} from '../models/estancia';
 import { API_BASE_URL } from './api.service';
 import { CeldasService } from './celdas.service';
 import { OperadoresService } from './operadores.service';
@@ -31,6 +40,27 @@ export class EstanciasService {
   consultar(placa: string) {
     return this.http
       .get<EstadoVehiculo>(`${this.base}/vehiculo/${encodeURIComponent(placa)}`)
+      .pipe(timeout(15000));
+  }
+  dentro(offset: number, limit: number) {
+    return this.http
+      .get<DentroPagina>(`${this.base}/dentro`, { params: { offset, limit } })
+      .pipe(timeout(15000));
+  }
+  historial(filtros: FiltrosHistorial, offset: number, limit: number) {
+    let params = new HttpParams();
+    for (const key of ['placa', 'desde', 'hasta'] as const) {
+      const value = filtros[key]?.trim();
+      if (value) params = params.set(key, value);
+    }
+    params = params.set('offset', offset).set('limit', limit);
+    return this.http
+      .get<HistorialPagina>(`${this.base}/historial`, { params })
+      .pipe(timeout(15000));
+  }
+  celdasEstado(offset = 0, limit = 100) {
+    return this.http
+      .get<CeldasEstadoPagina>(`${this.base}/celdas`, { params: { offset, limit } })
       .pipe(timeout(15000));
   }
   celdas(): Observable<Celda[]> {
