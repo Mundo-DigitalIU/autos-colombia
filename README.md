@@ -4,11 +4,11 @@ Sistema de información para el parqueadero "Autos Colombia", un parqueadero que
 
 Este repositorio es la **Iteración 1: gestión de la entrada y salida de vehículos**, del proyecto de Ingeniería de Software de la IU Digital de Antioquia.
 
-**Equipo:** Katherine Celeste Camacho Galaviz, David Castro Mora y Jeferson Cataño
+**Autor:** Jeferson Cataño C - David Castro M - Katherine 
 
 ## Qué hace esta iteración
 
-En esta primera entrega nos enfocamos en controlar quién entra y quién sale del parqueadero:
+En esta primera entrega me enfoqué en controlar quién entra y quién sale del parqueadero:
 
 | Función | Requisito | Cómo funciona |
 |---|---|---|
@@ -25,15 +25,15 @@ Cuando algo no se puede hacer (vehículo no registrado, ya está dentro, no hay 
 
 ## De dónde parte este proyecto
 
-Parte de la base que entregó el profesor, que ya traía la conexión a PostgreSQL, las migraciones, el CRUD de vehículos, celdas y operadores, y el registro de entrada y salida. Sobre esa base agregamos:
+Parte de la base que entregó el profesor, que ya traía la conexión a PostgreSQL, las migraciones, el CRUD de vehículos, celdas y operadores, y el registro de entrada y salida. Sobre esa base agregué:
 
 - La **asignación automática de celda** al registrar la entrada.
 - Las tres **consultas nuevas**: vehículos dentro, historial y celdas con estado.
 - El script de **datos de prueba** (`backend/seed.py`).
 - Las **pruebas** de todo lo anterior.
-- Las **pantallas** de la iteración, a partir de nuestro diseño en Figma (ver "Estado").
+- Las **pantallas** de la iteración, a partir de mi diseño en Figma (ver "Estado").
 
-No cambiamos las migraciones ni las tablas de la base.
+No cambié las migraciones ni las tablas de la base.
 
 ## Tecnologías
 
