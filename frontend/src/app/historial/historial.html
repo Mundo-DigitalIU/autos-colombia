@@ -1,0 +1,98 @@
+<section class="management" aria-labelledby="history-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">CONSULTAS</span>
+      <h1 id="history-title">Historial</h1>
+      <p>Entradas y salidas de vehículos. Horas en zona America/Bogota.</p>
+    </div>
+  </header>
+  <section class="panel" aria-labelledby="filters-title">
+    <h2 id="filters-title">Filtros</h2>
+    <form [formGroup]="form" (ngSubmit)="buscar()">
+      <fieldset [disabled]="loading()">
+        <legend class="sr-only">Filtros del historial</legend>
+        <div class="form-grid">
+          <div class="field">
+            <label for="filter-plate">Placa</label>
+            <input id="filter-plate" type="text" formControlName="placa" />
+          </div>
+          <div class="field">
+            <label for="filter-from">Desde</label>
+            <input id="filter-from" type="date" formControlName="desde" />
+          </div>
+          <div class="field">
+            <label for="filter-to">Hasta</label>
+            <input id="filter-to" type="date" formControlName="hasta" />
+          </div>
+        </div>
+        <button class="primary" type="submit">{{ loading() ? 'Buscando…' : 'Buscar' }}</button>
+      </fieldset>
+    </form>
+  </section>
+  <section class="panel" aria-label="Movimientos" [attr.aria-busy]="loading()">
+    <h2>
+      Movimientos <span class="count">{{ total() }}</span>
+    </h2>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando historial…</p>
+    } @else if (error()) {
+      <p class="notice error" role="alert">{{ error() }}</p>
+    } @else if (!items().length) {
+      <p class="empty">No hay movimientos con esos filtros.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">
+            Historial de entradas y salidas
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Placa</th>
+              <th scope="col">Celda</th>
+              <th scope="col">Entrada</th>
+              <th scope="col">Salida</th>
+              <th scope="col">Operador de entrada</th>
+              <th scope="col">Operador de salida</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.estancia_id) {
+              <tr>
+                <th scope="row">{{ item.placa }}</th>
+                <td>{{ item.celda_codigo }}</td>
+                <td>{{ fecha(item.entrada) }}</td>
+                <td>
+                  @if (item.salida) {
+                    {{ fecha(item.salida) }}
+                  } @else {
+                    <span class="tag">Dentro</span>
+                  }
+                </td>
+                <td>{{ item.operador_entrada }}</td>
+                <td>{{ item.operador_salida ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación del historial">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button
+          type="button"
+          (click)="cargar(offset() - limit)"
+          [disabled]="loading() || offset() === 0"
+        >
+          Anterior</button
+        ><button
+          type="button"
+          (click)="cargar(offset() + limit)"
+          [disabled]="loading() || offset() + limit >= total()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </nav>
+  </section>
+</section>

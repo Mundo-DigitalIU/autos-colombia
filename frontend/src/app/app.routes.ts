@@ -33,5 +33,10 @@ export const routes: Routes = [
     title: 'Dentro | Autos Colombia',
     loadComponent: () => import('./dentro/dentro').then((m) => m.Dentro),
   },
+  {
+    path: 'historial',
+    title: 'Historial | Autos Colombia',
+    loadComponent: () => import('./historial/historial').then((m) => m.Historial),
+  },
   { path: '**', redirectTo: '' },
 ];
