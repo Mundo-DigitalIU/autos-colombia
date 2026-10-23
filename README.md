@@ -4,7 +4,7 @@ Sistema de información para el parqueadero "Autos Colombia", un parqueadero que
 
 Este repositorio es la **Iteración 1: gestión de la entrada y salida de vehículos**, del proyecto de Ingeniería de Software de la IU Digital de Antioquia.
 
-**Autor:** Jeferson Cataño
+**Autor:** Jeferson Cataño C - David Castro M - Katherine 
 
 ## Qué hace esta iteración
 
