@@ -1,0 +1,136 @@
+.management {
+  padding: 44px 0 60px;
+}
+.heading {
+  margin-bottom: 30px;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #5a6480;
+  font-weight: 700;
+}
+h1 {
+  margin: 12px 0;
+  font-size: 36px;
+  letter-spacing: -1px;
+}
+h2 {
+  font-size: 19px;
+  margin: 0 0 20px;
+}
+p {
+  color: #5a6480;
+  line-height: 1.6;
+}
+.panel {
+  max-width: 560px;
+  padding: 26px;
+  border: 1px solid #dcdfe8;
+  background: #fff;
+  border-radius: 16px;
+}
+button,
+input {
+  font: inherit;
+  border-radius: 8px;
+}
+button {
+  font-size: 14px;
+  padding: 10px 14px;
+  border: 1px solid #c9cfdd;
+  color: #2c3e63;
+  background: #fff;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: #e7eaf3;
+}
+button.primary {
+  background: #2c3e63;
+  color: white;
+  border-color: #2c3e63;
+}
+button.primary:hover:not(:disabled) {
+  background: #1f2d4b;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #9a5b2d;
+  outline-offset: 3px;
+}
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+label {
+  font-size: 14px;
+  font-weight: 600;
+}
+input {
+  padding: 11px 12px;
+  border: 1px solid #c9cfdd;
+  background: #fff;
+  width: 100%;
+  color: #1f2a44;
+}
+[aria-invalid='true'] {
+  border-color: #8f3a2c;
+}
+.field-error {
+  font-size: 12px;
+  color: #8f3a2c;
+  min-height: 16px;
+}
+.notice {
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-top: 18px;
+}
+.notice p {
+  margin: 4px 0 0;
+  color: inherit;
+}
+.success {
+  background: #e6f1e8;
+  color: #1f6350;
+}
+.error {
+  background: #fff0ec;
+  color: #8f3a2c;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .panel {
+    padding: 18px;
+  }
+}
+@media (max-width: 460px) {
+  h1 {
+    font-size: 30px;
+  }
+  .management {
+    padding-top: 28px;
+  }
+}
