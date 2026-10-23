@@ -1,0 +1,58 @@
+<section class="management" aria-labelledby="exit-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">CONTROL DE ACCESO</span>
+      <h1 id="exit-title">Registrar salida</h1>
+      <p>Escribe la placa del vehículo que sale. La celda queda libre al registrar la salida.</p>
+    </div>
+  </header>
+  <section class="panel" aria-labelledby="exit-form-title">
+    <h2 id="exit-form-title">Salida de vehículo</h2>
+    @if (cargandoOperador()) {
+      <p role="status">Cargando operador…</p>
+    }
+    @if (errorOperador()) {
+      <p class="notice error" role="alert">{{ errorOperador() }}</p>
+      <button type="button" (click)="cargarOperador()" [disabled]="cargandoOperador()">
+        Reintentar
+      </button>
+    }
+    <form [formGroup]="form" (ngSubmit)="registrar()" novalidate>
+      <fieldset [disabled]="bloqueado()">
+        <legend class="sr-only">Datos de la salida</legend>
+        <div class="field">
+          <label for="plate">Placa</label>
+          <input
+            id="plate"
+            type="text"
+            formControlName="placa"
+            autocomplete="off"
+            [attr.aria-invalid]="!!errorPlaca()"
+            aria-describedby="plate-error"
+          />
+          <span class="field-error" id="plate-error">{{ errorPlaca() }}</span>
+        </div>
+        <button class="primary" type="submit">
+          {{ saving() ? 'Registrando…' : 'Registrar salida' }}
+        </button>
+      </fieldset>
+    </form>
+    @if (error()) {
+      <p class="notice error" role="alert">{{ error() }}</p>
+    }
+    @if (resultado(); as r) {
+      <div class="notice success" role="status">
+        <strong>Salida registrada</strong>
+        <p>
+          Placa {{ r.placa }} ·
+          @if (r.celda) {
+            Celda liberada: <strong>{{ r.celda }}</strong>
+          } @else {
+            No se pudo consultar la celda liberada.
+          }
+          · {{ fecha(r.salida) }} (Bogotá)
+        </p>
+      </div>
+    }
+  </section>
+</section>

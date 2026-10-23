@@ -43,5 +43,10 @@ export const routes: Routes = [
     title: 'Entrada | Autos Colombia',
     loadComponent: () => import('./entrada/entrada').then((m) => m.Entrada),
   },
+  {
+    path: 'salida',
+    title: 'Salida | Autos Colombia',
+    loadComponent: () => import('./salida/salida').then((m) => m.Salida),
+  },
   { path: '**', redirectTo: '' },
 ];
