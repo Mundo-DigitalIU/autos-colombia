@@ -3,20 +3,7 @@ import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('Navegación', () => {
-  it('ofrece acceso a la gestión de vehículos', async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-      providers: [provideRouter([])],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('a[href="/gestion/vehiculos"]')
-        ?.textContent,
-    ).toBe('Vehículos');
-  });
-
-  it('ordena el menú con las pantallas de la iteración primero', async () => {
+  it('muestra en el menú solo las pantallas de la iteración, en orden', async () => {
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([])],
@@ -33,10 +20,6 @@ describe('Navegación', () => {
       ['Dentro', '/dentro'],
       ['Historial', '/historial'],
       ['Celdas', '/estado-celdas'],
-      ['Vehículos', '/gestion/vehiculos'],
-      ['Operadores', '/gestion/operadores'],
-      ['Control de acceso', '/control-acceso'],
-      ['Gestión de celdas', '/gestion/celdas'],
     ]);
   });
 });
