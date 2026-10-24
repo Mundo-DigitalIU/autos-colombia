@@ -175,7 +175,7 @@ $env:RUN_POSTGRES_TESTS = '1'
 Remove-Item Env:RUN_POSTGRES_TESTS
 ```
 
-En la última ejecución completa pasaron 143 pruebas. Las de integración exigen que la base se llame `autos_colombia` y esté en la revisión `0002`.
+En la última ejecución completa pasaron las 143 pruebas del backend y las 72 del frontend. Las de integración exigen que la base se llame `autos_colombia` y esté en la revisión `0002`.
 
 ## Estado
 
