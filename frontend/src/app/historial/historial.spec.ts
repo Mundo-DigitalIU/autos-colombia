@@ -95,6 +95,14 @@ describe('Historial', () => {
     expect(c.error()).toContain('no puede ser posterior');
   });
 
+  it('muestra los títulos del diseño', () => {
+    inicial().flush(pagina([]));
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.eyebrow')?.textContent).toBe('CONSULTA');
+    expect(root.querySelector('h1')?.textContent).toBe('Historial de movimientos');
+  });
+
   it('muestra el estado vacío', () => {
     inicial().flush(pagina([]));
     fixture.detectChanges();

@@ -1,12 +1,12 @@
 <section class="management" aria-labelledby="cells-status-title">
   <header class="heading">
     <div>
-      <span class="eyebrow">ESTADO DEL PARQUEADERO</span>
-      <h1 id="cells-status-title">Celdas</h1>
+      <span class="eyebrow">GESTIÓN DEL ESPACIO</span>
+      <h1 id="cells-status-title">Estado de las celdas</h1>
       <p>Consulta qué celdas están disponibles y cuáles están ocupadas.</p>
     </div>
     <button type="button" (click)="load()" [disabled]="loading()">
-      {{ loading() ? 'Actualizando…' : 'Actualizar' }}
+      {{ loading() ? 'Actualizando…' : 'Actualizar listado' }}
     </button>
   </header>
   <div class="summary">
@@ -52,7 +52,7 @@
                     class="tag"
                     [class.available]="cell.estado === 'DISPONIBLE'"
                     [class.occupied]="cell.estado === 'OCUPADA'"
-                    >{{ cell.estado }}</span
+                    >{{ cell.estado === 'OCUPADA' ? 'Ocupada' : 'Disponible' }}</span
                   >
                 </td>
               </tr>

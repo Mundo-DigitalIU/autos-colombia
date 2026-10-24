@@ -44,8 +44,11 @@ describe('Estado de las celdas', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('[data-testid="disponibles"]')?.textContent).toBe('1');
     expect(root.querySelector('[data-testid="ocupadas"]')?.textContent).toBe('1');
-    expect(root.querySelector('.tag.occupied')?.textContent).toContain('OCUPADA');
-    expect(root.querySelector('.tag.available')?.textContent).toContain('DISPONIBLE');
+    expect(root.querySelector('.tag.occupied')?.textContent?.trim()).toBe('Ocupada');
+    expect(root.querySelector('.tag.available')?.textContent?.trim()).toBe('Disponible');
+    expect(root.querySelector('.eyebrow')?.textContent).toBe('GESTIÓN DEL ESPACIO');
+    expect(root.querySelector('h1')?.textContent).toBe('Estado de las celdas');
+    expect(root.querySelector('header button')?.textContent?.trim()).toBe('Actualizar listado');
     expect(root.querySelectorAll('tbody tr').length).toBe(2);
   });
 

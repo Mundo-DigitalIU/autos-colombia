@@ -45,6 +45,15 @@ describe('Vehículos dentro', () => {
     expect(fixture.nativeElement.querySelector('.count').textContent).toBe('1');
   });
 
+  it('muestra los títulos del diseño y el botón "Actualizar listado"', () => {
+    http.expectOne(url).flush({ items: [], total: 0, offset: 0, limit: 20 });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.eyebrow')?.textContent).toBe('OCUPACIÓN ACTUAL');
+    expect(root.querySelector('h1')?.textContent).toBe('Vehículos dentro del parqueadero');
+    expect(root.querySelector('header button')?.textContent?.trim()).toBe('Actualizar listado');
+  });
+
   it('muestra el estado vacío', () => {
     http.expectOne(url).flush({ items: [], total: 0, offset: 0, limit: 20 });
     fixture.detectChanges();
