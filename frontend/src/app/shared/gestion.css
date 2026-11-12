@@ -309,3 +309,16 @@ thead th {
 .button-link:hover {
   background: #e7eaf3;
 }
+.form-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  .form-grid.three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 460px) {
+  .form-grid.three {
+    grid-template-columns: 1fr;
+  }
+}

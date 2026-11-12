@@ -1,0 +1,278 @@
+<section class="management" aria-labelledby="clients-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">CLIENTES Y VEHÍCULOS</span>
+      <h1 id="clients-title">Clientes</h1>
+      <p>Registra a los clientes con sus vehículos y consulta quién es el dueño de cada placa.</p>
+    </div>
+    <button class="primary" type="button" (click)="nuevo()" [disabled]="busy()">
+      Registrar cliente
+    </button>
+  </header>
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+  @if (showForm()) {
+    <section class="panel" aria-labelledby="client-form-title">
+      <h2 id="client-form-title">
+        {{ editing() === null ? 'Registrar cliente' : 'Editar cliente' }}
+      </h2>
+      <p class="hint">
+        Todos los campos son obligatorios. El cliente puede tener uno o varios vehículos.
+      </p>
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <fieldset [disabled]="busy()">
+          <legend class="sr-only">Datos del cliente</legend>
+          <div class="form-grid three">
+            @for (campo of camposCliente; track campo.key) {
+              <div class="field">
+                <label [for]="'cliente-' + campo.key">{{ campo.label }}</label
+                ><input
+                  [type]="campo.tipo"
+                  [id]="'cliente-' + campo.key"
+                  [formControlName]="campo.key"
+                  autocomplete="off"
+                  [attr.aria-invalid]="!!errorCliente(campo.key)"
+                  [attr.aria-describedby]="'cliente-' + campo.key + '-error'"
+                /><span class="field-error" [id]="'cliente-' + campo.key + '-error'">{{
+                  errorCliente(campo.key)
+                }}</span>
+              </div>
+            }
+          </div>
+          <div formArrayName="vehiculos">
+            @for (grupo of bloques(); track grupo; let i = $index) {
+              <div class="vehiculo-bloque" [formGroupName]="i" role="group">
+                <h3>Vehículo {{ i + 1 }}</h3>
+                <div class="form-grid three">
+                  <div class="field">
+                    <label [for]="'placa-' + i">Placa</label
+                    ><input
+                      [id]="'placa-' + i"
+                      type="text"
+                      formControlName="placa"
+                      autocomplete="off"
+                      [attr.aria-invalid]="!!errorVehiculo(i, 'placa')"
+                    /><span class="field-error">{{ errorVehiculo(i, 'placa') }}</span>
+                  </div>
+                  <div class="field">
+                    <label [for]="'tipo-' + i">Tipo</label
+                    ><select
+                      [id]="'tipo-' + i"
+                      formControlName="tipo"
+                      [attr.aria-invalid]="!!errorVehiculo(i, 'tipo')"
+                    >
+                      <option value="">Selecciona un tipo</option>
+                      @for (tipo of tipos; track tipo) {
+                        <option [value]="tipo">{{ tipo }}</option>
+                      }</select
+                    ><span class="field-error">{{ errorVehiculo(i, 'tipo') }}</span>
+                  </div>
+                  <div class="field">
+                    <label [for]="'marca-' + i">Marca</label
+                    ><input
+                      [id]="'marca-' + i"
+                      type="text"
+                      formControlName="marca"
+                      autocomplete="off"
+                      [attr.aria-invalid]="!!errorVehiculo(i, 'marca')"
+                    /><span class="field-error">{{ errorVehiculo(i, 'marca') }}</span>
+                  </div>
+                  <div class="field">
+                    <label [for]="'color-' + i">Color</label
+                    ><input
+                      [id]="'color-' + i"
+                      type="text"
+                      formControlName="color"
+                      autocomplete="off"
+                      [attr.aria-invalid]="!!errorVehiculo(i, 'color')"
+                    /><span class="field-error">{{ errorVehiculo(i, 'color') }}</span>
+                  </div>
+                  <div class="field">
+                    <label [for]="'modelo-' + i">Modelo (año)</label
+                    ><input
+                      [id]="'modelo-' + i"
+                      type="number"
+                      formControlName="modelo"
+                      min="1"
+                      max="9999"
+                      [attr.aria-invalid]="!!errorVehiculo(i, 'modelo')"
+                    /><span class="field-error">{{ errorVehiculo(i, 'modelo') }}</span>
+                  </div>
+                </div>
+                <div class="actions">
+                  @if (esGuardado(i)) {
+                    @if (auth.esAdministrador()) {
+                      <button
+                        type="button"
+                        class="delete-link"
+                        (click)="confirmarEliminarVehiculo(i)"
+                        [attr.aria-label]="'Eliminar el vehículo ' + (i + 1)"
+                      >
+                        Eliminar vehículo
+                      </button>
+                    }
+                  } @else if (bloques().length > 1) {
+                    <button
+                      type="button"
+                      (click)="quitarVehiculo(i)"
+                      [attr.aria-label]="'Quitar el vehículo ' + (i + 1)"
+                    >
+                      Quitar vehículo
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          @if (pendingVehicle(); as vehiculo) {
+            <div class="notice warning" role="alertdialog" aria-labelledby="delete-vehicle-title">
+              <strong id="delete-vehicle-title">Eliminar el vehículo {{ vehiculo.placa }}</strong>
+              <p>Esta acción no se puede deshacer.</p>
+              <div class="actions">
+                <button type="button" (click)="cancelarEliminarVehiculo()" [disabled]="busy()">
+                  Cancelar eliminación</button
+                ><button
+                  type="button"
+                  class="danger"
+                  (click)="eliminarVehiculo()"
+                  [disabled]="busy()"
+                >
+                  Confirmar eliminación
+                </button>
+              </div>
+            </div>
+          }
+          <div class="actions">
+            <button type="button" (click)="agregarVehiculo()">Agregar otro vehículo</button
+            ><button type="submit" class="primary">
+              {{ saving() ? 'Guardando…' : 'Guardar cliente' }}</button
+            ><button type="button" (click)="cancelar()">Cancelar</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  }
+  @if (pendingDelete(); as cliente) {
+    <section
+      class="panel confirmation"
+      role="alertdialog"
+      aria-labelledby="delete-client-title"
+      aria-describedby="delete-client-description"
+    >
+      <h2 id="delete-client-title">Eliminar cliente {{ cliente.nombre }}</h2>
+      <p id="delete-client-description">
+        ¿Quieres eliminar a <strong>{{ cliente.nombre }}</strong> (documento
+        {{ cliente.documento }}) y sus {{ cliente.vehiculos.length }} vehículos? Esta acción no se
+        puede deshacer.
+      </p>
+      <div class="actions">
+        <button type="button" (click)="cancelar()" [disabled]="busy()">Cancelar eliminación</button
+        ><button type="button" class="danger" (click)="eliminar()" [disabled]="busy()">
+          {{ saving() ? 'Eliminando…' : 'Confirmar eliminación' }}
+        </button>
+      </div>
+    </section>
+  }
+  <section class="panel list" aria-label="Listado de clientes" [attr.aria-busy]="loading()">
+    <div class="list-heading">
+      <h2>
+        Clientes <span class="count">{{ total() }}</span>
+      </h2>
+      <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
+    </div>
+    <form class="toolbar" (submit)="$event.preventDefault(); buscar()" role="search">
+      <div class="field">
+        <label for="clientes-buscar">Buscar por documento, nombre o placa</label>
+        <input id="clientes-buscar" type="search" [formControl]="buscador" autocomplete="off" />
+      </div>
+      <div class="actions">
+        <button type="submit" class="primary" [disabled]="busy()">Buscar</button
+        ><button type="button" (click)="limpiarBusqueda()" [disabled]="busy()">Limpiar</button>
+      </div>
+    </form>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando clientes…</p>
+    } @else if (listError()) {
+      <p class="notice error" role="alert">{{ listError() }}</p>
+    } @else if (!items().length) {
+      <div class="empty">
+        @if (consulta()) {
+          <h3>No hay clientes con esa búsqueda.</h3>
+        } @else {
+          <h3>Todavía no hay clientes registrados.</h3>
+        }
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">
+            Clientes registrados
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Documento</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Teléfono</th>
+              <th scope="col">Vehículos</th>
+              @if (auth.esAdministrador()) {
+                <th scope="col">Acciones</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (cliente of items(); track cliente.id) {
+              <tr>
+                <th scope="row">{{ cliente.documento }}</th>
+                <td>{{ cliente.nombre }}</td>
+                <td>{{ cliente.telefono }}</td>
+                <td>{{ placas(cliente) || 'Sin vehículos' }}</td>
+                @if (auth.esAdministrador()) {
+                  <td class="row-actions">
+                    <button
+                      type="button"
+                      (click)="editar(cliente)"
+                      [disabled]="busy()"
+                      [attr.aria-label]="'Editar a ' + cliente.nombre"
+                    >
+                      Editar</button
+                    ><button
+                      type="button"
+                      class="delete-link"
+                      (click)="confirmarEliminar(cliente)"
+                      [disabled]="busy()"
+                      [attr.aria-label]="'Eliminar a ' + cliente.nombre"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación de clientes">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button
+          type="button"
+          (click)="load(offset() - limit)"
+          [disabled]="busy() || offset() === 0"
+        >
+          Anterior</button
+        ><button
+          type="button"
+          (click)="load(offset() + limit)"
+          [disabled]="busy() || offset() + limit >= total()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </nav>
+  </section>
+</section>

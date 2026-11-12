@@ -58,6 +58,11 @@ export const routes: Routes = [
         loadComponent: () => import('./control-acceso/control-acceso').then((m) => m.ControlAcceso),
       },
       {
+        path: 'panel/clientes',
+        title: 'Clientes | Autos Colombia',
+        loadComponent: () => import('./clientes/clientes').then((m) => m.Clientes),
+      },
+      {
         path: 'panel/cuentas',
         title: 'Cuentas | Autos Colombia',
         canActivate: [administradorGuard],
