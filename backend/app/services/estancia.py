@@ -33,6 +33,16 @@ def rango_entrada(desde: date | None, hasta: date | None) -> tuple[datetime | No
     return inicio, fin
 
 
+def normalizar_tipo(tipo: str) -> str:
+    """Tipo sin espacios en los extremos y en mayúsculas, para comparar tipos de celda y vehículo."""
+    return tipo.strip().upper()
+
+
+def tipo_celda_normalizado():
+    """Expresión SQL equivalente a normalizar_tipo sobre celda.tipo (texto libre)."""
+    return func.upper(func.regexp_replace(Celda.tipo, "^[[:space:]]+|[[:space:]]+$", "", "g"))
+
+
 class EstanciaError(Exception):
     def __init__(self, status_code: int, detail: str) -> None:
         self.status_code = status_code
@@ -92,7 +102,7 @@ class ServicioEstancia:
             Estancia.celda_id == Celda.id, Estancia.salida.is_(None)
         ).correlate(Celda).exists()
         celda = self.session.scalar(
-            select(Celda).where(Celda.tipo == tipo, ~ocupada)
+            select(Celda).where(tipo_celda_normalizado() == normalizar_tipo(tipo), ~ocupada)
             .order_by(Celda.id).limit(1)
             .with_for_update(skip_locked=True, of=Celda)
         )
@@ -120,6 +130,8 @@ class ServicioEstancia:
             Estancia.celda_id == celda.id, Estancia.salida.is_(None)
         )) is not None:
             raise EstanciaError(409, "La celda está ocupada.")
+        if normalizar_tipo(celda.tipo) != normalizar_tipo(vehiculo.tipo):
+            raise EstanciaError(409, "La celda no es del tipo del vehículo.")
         estancia = Estancia(vehiculo_id=vehiculo.id, celda_id=celda.id,
                             operador_entrada_id=operador.id, entrada=datetime.now(timezone.utc))
         self.session.add(estancia)

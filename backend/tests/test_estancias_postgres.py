@@ -26,7 +26,7 @@ def datos():
     token = 'TEST-EST-' + uuid4().hex.upper()
     with Session(engine) as s, s.begin():
         vehicles = [Vehiculo(placa=f'{token}-{n}', color='Prueba', modelo=2026, marca='Prueba', tipo='MOTO') for n in range(2)]
-        cells = [Celda(codigo=f'{token}-{n}', tipo='Libre') for n in range(2)]
+        cells = [Celda(codigo=f'{token}-{n}', tipo='MOTO') for n in range(2)]
         operators = [Operador(nombre=f'{token}-{n}', telefono='001') for n in range(2)]
         s.add_all(vehicles + cells + operators)
         s.flush()
