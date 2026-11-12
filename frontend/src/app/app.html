@@ -3,25 +3,28 @@
     <a class="brand" routerLink="/" aria-label="Autos Colombia, inicio">
       <span class="brand-mark" aria-hidden="true">AC</span><span>Autos Colombia</span>
     </a>
-    <nav aria-label="Navegación principal">
-      <a
-        routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        ariaCurrentWhenActive="page"
-        >Inicio</a
-      >
-      <a routerLink="/entrada" routerLinkActive="active" ariaCurrentWhenActive="page">Entrada</a>
-      <a routerLink="/salida" routerLinkActive="active" ariaCurrentWhenActive="page">Salida</a>
-      <a routerLink="/dentro" routerLinkActive="active" ariaCurrentWhenActive="page">Dentro</a>
-      <a routerLink="/historial" routerLinkActive="active" ariaCurrentWhenActive="page"
-        >Historial</a
-      >
-      <a routerLink="/estado-celdas" routerLinkActive="active" ariaCurrentWhenActive="page"
-        >Celdas</a
-      >
-    </nav>
+    @if (auth.autenticado()) {
+      <nav aria-label="Navegación principal">
+        @for (enlace of enlaces(); track enlace.ruta) {
+          <a [routerLink]="enlace.ruta" routerLinkActive="active" ariaCurrentWhenActive="page">{{
+            enlace.texto
+          }}</a>
+        }
+      </nav>
+      <div class="sesion" aria-label="Sesión">
+        <span class="sesion-datos"
+          ><strong>{{ auth.nombre() }}</strong
+          ><span class="sesion-rol">{{ rolTexto() }}</span></span
+        >
+        <button type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+      </div>
+    }
   </header>
-  <main><router-outlet /></main>
+  <main>
+    @if (auth.sinPermiso()) {
+      <p class="aviso-global" role="alert">{{ mensajeSinPermiso }}</p>
+    }
+    <router-outlet />
+  </main>
   <footer><span>Autos Colombia</span><span>Control vehicular con claridad.</span></footer>
 </div>

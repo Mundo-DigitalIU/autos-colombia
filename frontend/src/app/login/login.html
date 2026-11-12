@@ -1,0 +1,52 @@
+<section class="management login" aria-labelledby="login-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">AUTOS COLOMBIA</span>
+      <h1 id="login-title">Iniciar sesión</h1>
+      <p>Escribe tu usuario y tu contraseña para entrar al sistema.</p>
+    </div>
+  </header>
+  <section class="panel" aria-labelledby="login-form-title">
+    <h2 id="login-form-title">Acceso al sistema</h2>
+    @if (aviso()) {
+      <p class="notice success" role="status">{{ aviso() }}</p>
+    }
+    @if (error()) {
+      <p class="notice error" role="alert">{{ error() }}</p>
+    }
+    <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+      <fieldset [disabled]="saving()">
+        <legend class="sr-only">Datos de acceso</legend>
+        <div class="form-grid single">
+          <div class="field">
+            <label for="usuario">Usuario</label>
+            <input
+              id="usuario"
+              type="text"
+              formControlName="usuario"
+              autocomplete="username"
+              [attr.aria-invalid]="!!errorUsuario()"
+              aria-describedby="usuario-error"
+            />
+            <span class="field-error" id="usuario-error">{{ errorUsuario() }}</span>
+          </div>
+          <div class="field">
+            <label for="contrasena">Contraseña</label>
+            <input
+              id="contrasena"
+              type="password"
+              formControlName="contrasena"
+              autocomplete="current-password"
+              [attr.aria-invalid]="!!errorContrasena()"
+              aria-describedby="contrasena-error"
+            />
+            <span class="field-error" id="contrasena-error">{{ errorContrasena() }}</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" type="submit">{{ saving() ? 'Entrando…' : 'Entrar' }}</button>
+        </div>
+      </fieldset>
+    </form>
+  </section>
+</section>

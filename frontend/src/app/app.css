@@ -69,3 +69,45 @@ footer {
     flex-wrap: wrap;
   }
 }
+.site-header {
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+.sesion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #5a6480;
+}
+.sesion-datos {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  text-align: right;
+}
+.sesion-rol {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.sesion button {
+  padding: 8px 12px;
+  border: 1px solid #c9cfdd;
+  border-radius: 8px;
+  background: #fff;
+  color: #2c3e63;
+  font: inherit;
+  cursor: pointer;
+}
+.sesion button:hover {
+  background: #e7eaf3;
+}
+.aviso-global {
+  margin: 20px 0 0;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #f6e4e0;
+  color: #8f3a2c;
+}
