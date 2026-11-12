@@ -112,14 +112,14 @@ class ServicioEstancia:
         return celda
 
     @transaccion
-    def entrada(self, data: EntradaCrear) -> EstanciaRespuesta:
+    def entrada(self, data: EntradaCrear, operador_id: int) -> EstanciaRespuesta:
         vehiculo = self._vehiculo(data.placa)
         celda = None
         if data.celda_id is not None:
             celda = self.session.get(Celda, data.celda_id)
             if celda is None:
                 raise EstanciaError(404, "Celda no encontrada.")
-        operador = self._operador(data.operador_id)
+        operador = self._operador(operador_id)
         if self.session.scalar(select(Estancia.id).where(
             Estancia.vehiculo_id == vehiculo.id, Estancia.salida.is_(None)
         )) is not None:
@@ -141,9 +141,9 @@ class ServicioEstancia:
         return EstanciaRespuesta.model_validate(estancia)
 
     @transaccion
-    def salida(self, data: SalidaCrear) -> EstanciaRespuesta:
+    def salida(self, data: SalidaCrear, operador_id: int) -> EstanciaRespuesta:
         vehiculo = self._vehiculo(data.placa)
-        operador = self._operador(data.operador_id)
+        operador = self._operador(operador_id)
         # PostgreSQL vuelve a evaluar salida IS NULL tras esperar el bloqueo.
         estancia = self.session.scalar(select(Estancia).where(
             Estancia.vehiculo_id == vehiculo.id, Estancia.salida.is_(None)

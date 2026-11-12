@@ -26,7 +26,7 @@ def test_normalizar_tipo_ignora_mayusculas_y_espacios(tipo):
 
 
 @solo_postgres
-def test_entrada_con_celda_valida_el_tipo_del_vehiculo():
+def test_entrada_con_celda_valida_el_tipo_del_vehiculo(fijar_sesion):
     with get_engine().connect() as connection:
         transaction = connection.begin()
         try:
@@ -43,6 +43,8 @@ def test_entrada_con_celda_valida_el_tipo_del_vehiculo():
                          "VALUES (:placa, 'Prueba', 2026, 'Prueba', 'MOTO')"),
                     {"placa": placa},
                 )
+
+            fijar_sesion(operador_id=operador_id)
 
             def crear_celda(sufijo: str, tipo: str) -> int:
                 return connection.scalar(
@@ -69,25 +71,25 @@ def test_entrada_con_celda_valida_el_tipo_del_vehiculo():
                     with TestClient(app) as client:
                         antes = estancias()
                         rechazada = client.post("/estancias/entrada", json={
-                            "placa": placas["A"], "celda_id": celda_otro_tipo, "operador_id": operador_id})
+                            "placa": placas["A"], "celda_id": celda_otro_tipo})
                         assert rechazada.status_code == 409
                         assert rechazada.json()["detail"] == "La celda no es del tipo del vehículo."
                         assert estancias() == antes
 
                         correcta = client.post("/estancias/entrada", json={
-                            "placa": placas["A"], "celda_id": celda_tipo_exacto, "operador_id": operador_id})
+                            "placa": placas["A"], "celda_id": celda_tipo_exacto})
                         assert correcta.status_code == 201
                         assert correcta.json()["celda_id"] == celda_tipo_exacto
 
                         # Solo difiere en mayúsculas y espacios: es del mismo tipo.
                         sucia = client.post("/estancias/entrada", json={
-                            "placa": placas["B"], "celda_id": celda_tipo_sucio, "operador_id": operador_id})
+                            "placa": placas["B"], "celda_id": celda_tipo_sucio})
                         assert sucia.status_code == 201
                         assert sucia.json()["celda_id"] == celda_tipo_sucio
 
                         # El orden de validación se mantiene: celda ocupada antes que tipo.
                         ocupada = client.post("/estancias/entrada", json={
-                            "placa": placas["C"], "celda_id": celda_tipo_exacto, "operador_id": operador_id})
+                            "placa": placas["C"], "celda_id": celda_tipo_exacto})
                         assert ocupada.status_code == 409
                         assert ocupada.json()["detail"] == "La celda está ocupada."
                 finally:

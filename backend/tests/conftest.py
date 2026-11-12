@@ -3,9 +3,11 @@
 Casi todas las pruebas ejercitan rutas que ahora exigen sesión. Para no repetir el
 inicio de sesión, se sustituye la dependencia `sesion_actual` por una sesión de
 ADMINISTRADOR. Un módulo de pruebas que sí necesita la autenticación real define
-`SIN_SESION_FALSA = True`. La fixture `fijar_sesion` cambia rol u operador.
+`SIN_SESION_FALSA = True`. La fixture `fijar_sesion` cambia rol u operador; el
+encabezado `X-Operador-Prueba` elige el operador de una sola petición.
 """
 import pytest
+from fastapi import Request
 
 from app.auth import sesion_actual
 from app.main import app
@@ -24,7 +26,12 @@ def sesion_simulada(request):
     if getattr(request.module, "SIN_SESION_FALSA", False):
         yield
         return
-    app.dependency_overrides[sesion_actual] = lambda: crear_sesion()
+    def simulada(peticion: Request) -> SesionActual:
+        # El encabezado X-Operador-Prueba permite a una misma prueba actuar como operadores distintos.
+        operador = peticion.headers.get("x-operador-prueba")
+        return crear_sesion(operador_id=int(operador) if operador else 1)
+
+    app.dependency_overrides[sesion_actual] = simulada
     yield
     app.dependency_overrides.pop(sesion_actual, None)
 

@@ -10,17 +10,16 @@ Identificador = Annotated[int, Field(strict=True, ge=1, le=9223372036854775807)]
 
 
 class EntradaCrear(BaseModel):
+    """El operador no viaja en el cuerpo: es el de la sesión que registra la entrada."""
     model_config = ConfigDict(extra="forbid")
     placa: Placa
     # Si no se envía, el servicio asigna una celda libre del mismo tipo del vehículo.
     celda_id: Identificador | None = None
-    operador_id: Identificador
 
 
 class SalidaCrear(BaseModel):
     model_config = ConfigDict(extra="forbid")
     placa: Placa
-    operador_id: Identificador
 
 
 class EstanciaRespuesta(BaseModel):

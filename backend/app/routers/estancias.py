@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.auth import SesionDeUsuario
 from app.database import get_session
 from app.schemas.estancia import (
     CeldasEstadoPagina, EntradaCrear, SalidaCrear, EstanciaRespuesta, EstadoVehiculoRespuesta,
@@ -17,13 +18,13 @@ DatabaseSession = Annotated[Session, Depends(get_session)]
 
 
 @router.post("/entrada", response_model=EstanciaRespuesta, status_code=201)
-def entrada(data: EntradaCrear, session: DatabaseSession) -> EstanciaRespuesta:
-    return ServicioEstancia(session).entrada(data)
+def entrada(data: EntradaCrear, session: DatabaseSession, actual: SesionDeUsuario) -> EstanciaRespuesta:
+    return ServicioEstancia(session).entrada(data, actual.operador_id)
 
 
 @router.post("/salida", response_model=EstanciaRespuesta)
-def salida(data: SalidaCrear, session: DatabaseSession) -> EstanciaRespuesta:
-    return ServicioEstancia(session).salida(data)
+def salida(data: SalidaCrear, session: DatabaseSession, actual: SesionDeUsuario) -> EstanciaRespuesta:
+    return ServicioEstancia(session).salida(data, actual.operador_id)
 
 
 @router.get("/dentro", response_model=VehiculosDentroPagina)

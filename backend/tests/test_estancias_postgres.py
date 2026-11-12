@@ -45,7 +45,12 @@ def datos():
 
 
 def entrada(d, v=0, c=0, o=0):
-    return {'placa': d['placas'][v], 'celda_id': d['c'][c], 'operador_id': d['o'][o]}
+    return {'placa': d['placas'][v], 'celda_id': d['c'][c]}
+
+
+def como(d, o=0):
+    """Encabezado que fija el operador de la sesión simulada de esa petición."""
+    return {'X-Operador-Prueba': str(d['o'][o])}
 
 
 def cantidad(d):
@@ -61,15 +66,18 @@ def test_recorrido_y_rechazos_sin_cambios_parciales(datos):
         assert outside.status_code == 200
         assert outside.json()['estancia'] is None and not outside.json()['esta_dentro']
         assert outside.json()['vehiculo']['id'] == d['v'][0]
-        for field, value in [('placa', 'INEXISTENTE-' + uuid4().hex), ('celda_id', 9223372036854775807), ('operador_id', 9223372036854775807)]:
-            assert client.post('/estancias/entrada', json={**entrada(d), field: value}).status_code == 404
+        for field, value in [('placa', 'INEXISTENTE-' + uuid4().hex), ('celda_id', 9223372036854775807)]:
+            assert client.post('/estancias/entrada', json={**entrada(d), field: value}, headers=como(d)).status_code == 404
             assert cantidad(d) == 0
+        sin_operador = {'X-Operador-Prueba': '9223372036854775807'}
+        assert client.post('/estancias/entrada', json=entrada(d), headers=sin_operador).status_code == 404
+        assert cantidad(d) == 0
         missing = 'INEXISTENTE-' + uuid4().hex
         assert client.get('/estancias/vehiculo/' + missing).status_code == 404
-        assert client.post('/estancias/salida', json={'placa': missing, 'operador_id': d['o'][0]}).status_code == 404
-        assert client.post('/estancias/salida', json={'placa': d['placas'][0], 'operador_id': 9223372036854775807}).status_code == 404
+        assert client.post('/estancias/salida', json={'placa': missing}, headers=como(d)).status_code == 404
+        assert client.post('/estancias/salida', json={'placa': d['placas'][0]}, headers=sin_operador).status_code == 404
         before = datetime.now(timezone.utc)
-        result = client.post('/estancias/entrada', json={**entrada(d), 'placa': ' ' + d['placas'][0].lower() + ' '})
+        result = client.post('/estancias/entrada', json={**entrada(d), 'placa': ' ' + d['placas'][0].lower() + ' '}, headers=como(d))
         assert result.status_code == 201
         opened = result.json()
         assert before <= datetime.fromisoformat(opened['entrada']) <= datetime.now(timezone.utc)
@@ -78,19 +86,19 @@ def test_recorrido_y_rechazos_sin_cambios_parciales(datos):
         assert inside['esta_dentro'] and inside['estancia']['id'] == opened['id']
         assert inside['estancia']['celda']['id'] == d['c'][0]
         for payload in (entrada(d, c=1), entrada(d, v=1)):
-            assert client.post('/estancias/entrada', json=payload).status_code == 409
+            assert client.post('/estancias/entrada', json=payload, headers=como(d)).status_code == 409
             assert cantidad(d) == 1
-        closed = client.post('/estancias/salida', json={'placa': d['placas'][0], 'operador_id': d['o'][1]})
+        closed = client.post('/estancias/salida', json={'placa': d['placas'][0]}, headers=como(d, 1))
         assert closed.status_code == 200
         assert closed.json()['operador_salida_id'] == d['o'][1]
         assert datetime.fromisoformat(closed.json()['salida']) >= datetime.fromisoformat(opened['entrada'])
-        assert client.post('/estancias/salida', json={'placa': d['placas'][0], 'operador_id': d['o'][0]}).status_code == 409
+        assert client.post('/estancias/salida', json={'placa': d['placas'][0]}, headers=como(d)).status_code == 409
         assert client.get(url).json()['estancia'] is None
         with Session(get_engine()) as s:
             saved = s.get(Estancia, opened['id'])
             assert saved.operador_salida_id == d['o'][1]
             assert saved.salida == datetime.fromisoformat(closed.json()['salida'])
-        assert client.post('/estancias/entrada', json=entrada(d, v=1)).status_code == 201
+        assert client.post('/estancias/entrada', json=entrada(d, v=1), headers=como(d)).status_code == 201
         assert cantidad(d) == 2
         for route in ('/health', '/vehiculos?limit=1', '/celdas?limit=1', '/operadores?limit=1'):
             assert client.get(route).status_code == 200
@@ -101,12 +109,13 @@ def test_concurrencia_real(datos, caso):
     d = datos
     if caso == 'salida':
         with TestClient(app) as client:
-            assert client.post('/estancias/entrada', json=entrada(d)).status_code == 201
+            assert client.post('/estancias/entrada', json=entrada(d), headers=como(d)).status_code == 201
         path = '/estancias/salida'
-        payloads = [{'placa': d['placas'][0], 'operador_id': o} for o in d['o']]
+        payloads = [({'placa': d['placas'][0]}, como(d, o)) for o in range(2)]
     else:
         path = '/estancias/entrada'
-        payloads = [entrada(d), entrada(d, v=1 if caso == 'celda' else 0, c=1 if caso == 'vehiculo' else 0, o=1)]
+        payloads = [(entrada(d), como(d)),
+                    (entrada(d, v=1 if caso == 'celda' else 0, c=1 if caso == 'vehiculo' else 0), como(d, 1))]
     barrier = Barrier(2, timeout=15)
 
     def sincronizar(conn, cursor, statement, parameters, context, executemany):
@@ -117,8 +126,9 @@ def test_concurrencia_real(datos, caso):
             barrier.wait()
 
     def enviar(payload):
+        cuerpo, encabezados = payload
         with TestClient(app) as client:
-            return client.post(path, json=payload)
+            return client.post(path, json=cuerpo, headers=encabezados)
 
     engine = get_engine()
     event.listen(engine, 'before_cursor_execute', sincronizar)

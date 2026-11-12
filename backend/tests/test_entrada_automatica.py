@@ -23,22 +23,22 @@ solo_postgres = pytest.mark.skipif(
 
 
 def test_entrada_sin_celda_es_valida():
-    data = EntradaCrear(placa="TEST", operador_id=1)
+    data = EntradaCrear(placa="TEST")
     assert data.celda_id is None
 
 
 def test_entrada_con_celda_sigue_funcionando():
-    assert EntradaCrear(placa="TEST", celda_id=3, operador_id=1).celda_id == 3
+    assert EntradaCrear(placa="TEST", celda_id=3).celda_id == 3
 
 
 @pytest.mark.parametrize("celda_id", [0, True, "1", 9223372036854775808])
 def test_celda_invalida_se_sigue_rechazando(celda_id):
     with pytest.raises(ValidationError):
-        EntradaCrear(placa="TEST", celda_id=celda_id, operador_id=1)
+        EntradaCrear(placa="TEST", celda_id=celda_id)
 
 
 @solo_postgres
-def test_entrada_asigna_celda_libre_del_mismo_tipo():
+def test_entrada_asigna_celda_libre_del_mismo_tipo(fijar_sesion):
     with get_engine().connect() as connection:
         transaction = connection.begin()
         try:
@@ -60,6 +60,7 @@ def test_entrada_asigna_celda_libre_del_mismo_tipo():
                     {"placa": placa},
                 )
 
+            fijar_sesion(operador_id=operador_id)
             with Session(bind=connection, join_transaction_mode="create_savepoint") as session:
                 def override():
                     yield session
@@ -70,7 +71,7 @@ def test_entrada_asigna_celda_libre_del_mismo_tipo():
                         celdas_usadas = []
                         for placa in placas[:libres]:
                             respuesta = client.post(
-                                "/estancias/entrada", json={"placa": placa, "operador_id": operador_id}
+                                "/estancias/entrada", json={"placa": placa}
                             )
                             assert respuesta.status_code == 201
                             celda_id = respuesta.json()["celda_id"]
@@ -80,7 +81,7 @@ def test_entrada_asigna_celda_libre_del_mismo_tipo():
 
                         # Sin celdas libres de moto: 409 y sin cambios.
                         sin_celda = client.post(
-                            "/estancias/entrada", json={"placa": placas[libres], "operador_id": operador_id}
+                            "/estancias/entrada", json={"placa": placas[libres]}
                         )
                         assert sin_celda.status_code == 409
                         assert sin_celda.json()["detail"] == "No hay celdas disponibles para este tipo de vehículo."
@@ -88,7 +89,7 @@ def test_entrada_asigna_celda_libre_del_mismo_tipo():
                         # Un vehículo que ya está dentro no puede volver a entrar.
                         if libres:
                             repetida = client.post(
-                                "/estancias/entrada", json={"placa": placas[0], "operador_id": operador_id}
+                                "/estancias/entrada", json={"placa": placas[0]}
                             )
                             assert repetida.status_code == 409
                             assert repetida.json()["detail"] == "El vehículo ya está dentro."
