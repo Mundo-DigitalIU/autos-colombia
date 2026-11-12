@@ -2,11 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { Celda } from '../models/celda';
-import { Operador } from '../models/operador';
 import { EstadoVehiculo } from '../models/estancia';
 import { EstanciasService } from '../services/estancias.service';
+import { mensajeApi } from '../shared/errores';
 
 const nonBlank: ValidatorFn = (c) =>
   typeof c.value === 'string' && c.value.trim() ? null : { required: true };
@@ -26,14 +25,11 @@ export class ControlAcceso {
   readonly entrada = this.fb.group({
     placa: this.fb.nonNullable.control('', nonBlank),
     celda_id: this.fb.control<number | null>(null, Validators.required),
-    operador_id: this.fb.control<number | null>(null, Validators.required),
   });
   readonly consulta = this.fb.group({
     placa: this.fb.nonNullable.control('', nonBlank),
-    operador_id: this.fb.control<number | null>(null, Validators.required),
   });
   readonly celdas = signal<Celda[]>([]);
-  readonly operadores = signal<Operador[]>([]);
   readonly catalogLoading = signal(false);
   readonly catalogError = signal('');
   readonly saving = signal(false);
@@ -62,20 +58,17 @@ export class ControlAcceso {
     this.catalogLoading.set(true);
     this.catalogError.set('');
     this.entrada.controls.celda_id.reset();
-    this.entrada.controls.operador_id.reset();
-    this.consulta.controls.operador_id.reset();
-    forkJoin({ celdas: this.api.celdas(), operadores: this.api.operadores() })
+    this.api
+      .celdas()
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (data) => {
-          this.celdas.set(data.celdas);
-          this.operadores.set(data.operadores);
+          this.celdas.set(data);
           this.catalogLoading.set(false);
         },
         error: () => {
           this.catalogLoading.set(false);
           this.celdas.set([]);
-          this.operadores.set([]);
           this.catalogError.set(
             'No se pudieron cargar todas las opciones. Reintenta actualizar catálogos.',
           );
@@ -91,7 +84,6 @@ export class ControlAcceso {
     const data = {
       placa: placa(raw.placa),
       celda_id: raw.celda_id!,
-      operador_id: raw.operador_id!,
     };
     const codigo =
       this.celdas().find((c) => c.id === data.celda_id)?.codigo ?? String(data.celda_id);
@@ -163,7 +155,7 @@ export class ControlAcceso {
     this.errorConsulta.set('');
     this.exitoSalida.set('');
     this.api
-      .salida({ placa: value, operador_id: this.consulta.controls.operador_id.value! })
+      .salida({ placa: value })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (result) => {
@@ -197,10 +189,9 @@ export class ControlAcceso {
   }
 
   private mensaje(error: HttpErrorResponse): string {
-    if ([404, 409].includes(error.status) && typeof error.error?.detail === 'string')
-      return error.error.detail;
+    if ([403, 404, 409].includes(error.status)) return mensajeApi(error);
     if (error.status === 422)
-      return 'Datos inválidos. Revisa la placa y selecciona una celda y un operador válidos según la operación.';
+      return 'Datos inválidos. Revisa la placa y selecciona una celda válida.';
     return 'No se pudo conectar con el servicio. Consulta el vehículo antes de reintentar: la operación podría haberse completado.';
   }
 }

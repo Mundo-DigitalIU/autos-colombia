@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { catchError, of, switchMap } from 'rxjs';
 import { Estancia } from '../models/estancia';
 import { EstanciasService } from '../services/estancias.service';
-import { OperadoresService } from '../services/operadores.service';
+import { mensajeApi } from '../shared/errores';
 import { fechaBogota } from '../shared/fecha';
 
 interface EntradaRegistrada {
@@ -22,20 +22,14 @@ interface EntradaRegistrada {
 })
 export class Entrada {
   private readonly api = inject(EstanciasService);
-  private readonly operadores = inject(OperadoresService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   readonly form = this.fb.nonNullable.group({ placa: '' });
-  readonly operadorId = signal<number | null>(null);
-  readonly cargandoOperador = signal(false);
-  readonly errorOperador = signal('');
   readonly saving = signal(false);
   readonly errorPlaca = signal('');
   readonly error = signal('');
   readonly resultado = signal<EntradaRegistrada | null>(null);
-  readonly bloqueado = computed(
-    () => this.saving() || this.cargandoOperador() || this.operadorId() === null,
-  );
+  readonly bloqueado = computed(() => this.saving());
   readonly fecha = fechaBogota;
 
   constructor() {
@@ -45,34 +39,6 @@ export class Entrada {
         this.errorPlaca.set('');
         this.error.set('');
         this.resultado.set(null);
-      });
-    this.cargarOperador();
-  }
-
-  cargarOperador(): void {
-    if (this.cargandoOperador()) return;
-    this.cargandoOperador.set(true);
-    this.errorOperador.set('');
-    this.operadores
-      .list(0, 1)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => {
-          this.cargandoOperador.set(false);
-          const primero = data.items.at(0);
-          this.operadorId.set(primero?.id ?? null);
-          if (!primero)
-            this.errorOperador.set(
-              'No hay operadores registrados. No se puede registrar la entrada.',
-            );
-        },
-        error: () => {
-          this.cargandoOperador.set(false);
-          this.operadorId.set(null);
-          this.errorOperador.set(
-            'No se pudo cargar el operador. No se puede registrar la entrada hasta reintentar.',
-          );
-        },
       });
   }
 
@@ -88,7 +54,7 @@ export class Entrada {
     this.error.set('');
     this.resultado.set(null);
     this.api
-      .entrada({ placa, operador_id: this.operadorId()! })
+      .entrada({ placa })
       .pipe(
         switchMap((estancia: Estancia) =>
           this.api.consultar(placa).pipe(
@@ -119,8 +85,7 @@ export class Entrada {
   }
 
   private mensaje(error: HttpErrorResponse): string {
-    if ([404, 409].includes(error.status) && typeof error.error?.detail === 'string')
-      return error.error.detail;
+    if ([403, 404, 409].includes(error.status)) return mensajeApi(error);
     if (error.status === 422) return 'Revisa la placa: no es válida.';
     return 'No se pudo conectar con el servicio. Revisa la pantalla Dentro antes de reintentar: la entrada podría haberse registrado.';
   }

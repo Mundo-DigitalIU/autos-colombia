@@ -11,15 +11,15 @@
       Actualizar catálogos
     </button>
     @if (catalogLoading()) {
-      <p role="status">Cargando todas las páginas de celdas y operadores…</p>
+      <p role="status">Cargando todas las páginas de celdas…</p>
     }
     @if (catalogError()) {
       <p role="alert" class="notice error">{{ catalogError() }}</p>
     }
     @if (!catalogLoading() && !catalogError()) {
-      <p>{{ celdas().length }} celdas · {{ operadores().length }} operadores.</p>
-      @if (!celdas().length || !operadores().length) {
-        <p>Registra celdas y operadores desde su gestión para poder seleccionarlos.</p>
+      <p>{{ celdas().length }} celdas.</p>
+      @if (!celdas().length) {
+        <p>Registra celdas desde su gestión para poder seleccionarlas.</p>
       }
     }
     <p class="hint">
@@ -61,20 +61,6 @@
               }
             </span>
           </div>
-          <div class="field">
-            <label for="entry-operator">Operador de entrada</label
-            ><select id="entry-operator" formControlName="operador_id">
-              <option [ngValue]="null">Selecciona un operador</option>
-              @for (o of operadores(); track o.id) {
-                <option [ngValue]="o.id">{{ o.nombre }} · #{{ o.id }}</option>
-              }
-            </select>
-            <span class="field-error">
-              @if (entrada.controls.operador_id.touched && entrada.controls.operador_id.invalid) {
-                Selecciona un operador.
-              }
-            </span>
-          </div>
         </div>
         <button class="primary" type="submit">Registrar entrada</button>
       </fieldset>
@@ -101,20 +87,6 @@
               }
             </span>
           </div>
-          <div class="field">
-            <label for="exit-operator">Operador de salida</label
-            ><select id="exit-operator" formControlName="operador_id">
-              <option [ngValue]="null">Selecciona un operador</option>
-              @for (o of operadores(); track o.id) {
-                <option [ngValue]="o.id">{{ o.nombre }} · #{{ o.id }}</option>
-              }
-            </select>
-            <span class="field-error">
-              @if (consulta.controls.operador_id.touched && consulta.controls.operador_id.invalid) {
-                Selecciona un operador para confirmar la salida.
-              }
-            </span>
-          </div>
         </div>
         <button type="submit" [disabled]="busy()">Consultar vehículo</button>
       </fieldset>
@@ -131,7 +103,7 @@
         <p>{{ state.vehiculo.marca }} · {{ state.vehiculo.color }}</p>
         @if (state.estancia; as stay) {
           <p>Celda {{ stay.celda.codigo }} · Entrada {{ fecha(stay.entrada) }}</p>
-          <p>Confirma la salida de este vehículo con el operador seleccionado.</p>
+          <p>Confirma la salida de este vehículo. El operador es el de tu sesión.</p>
           <button
             type="button"
             class="primary"

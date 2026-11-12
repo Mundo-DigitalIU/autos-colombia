@@ -4,11 +4,9 @@ import { TipoVehiculo, Vehiculo } from './vehiculo';
 export interface EntradaCrear {
   placa: string;
   celda_id?: number;
-  operador_id: number;
 }
 export interface SalidaCrear {
   placa: string;
-  operador_id: number;
 }
 export interface Estancia {
   id: number;

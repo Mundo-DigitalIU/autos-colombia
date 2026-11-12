@@ -8,15 +8,6 @@
   </header>
   <section class="panel" aria-labelledby="entry-form-title">
     <h2 id="entry-form-title">Entrada de vehículo</h2>
-    @if (cargandoOperador()) {
-      <p role="status">Cargando operador…</p>
-    }
-    @if (errorOperador()) {
-      <p class="notice error" role="alert">{{ errorOperador() }}</p>
-      <button type="button" (click)="cargarOperador()" [disabled]="cargandoOperador()">
-        Reintentar
-      </button>
-    }
     <form [formGroup]="form" (ngSubmit)="registrar()" novalidate>
       <fieldset [disabled]="bloqueado()">
         <legend class="sr-only">Datos de la entrada</legend>

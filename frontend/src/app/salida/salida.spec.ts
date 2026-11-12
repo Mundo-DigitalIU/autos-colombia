@@ -7,12 +7,6 @@ describe('Registrar salida', () => {
   let fixture: ComponentFixture<Salida>;
   let http: HttpTestingController;
   let c: Salida;
-  const operadores = {
-    items: [{ id: 2, nombre: 'Operador Portería', telefono: '300' }],
-    total: 1,
-    offset: 0,
-    limit: 1,
-  };
   const estancia = {
     id: 20,
     vehiculo_id: 1,
@@ -24,7 +18,6 @@ describe('Registrar salida', () => {
   };
   const celda = { id: 2, codigo: 'C-01', tipo: 'AUTOMOVIL' };
   const texto = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
-  const cargarOperador = () => http.expectOne('/operadores?offset=0&limit=1').flush(operadores);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -38,27 +31,7 @@ describe('Registrar salida', () => {
   });
   afterEach(() => http.verify());
 
-  it('toma el primer operador al cargar y bloquea el formulario mientras tanto', () => {
-    expect(texto()).toContain('Cargando operador');
-    expect(c.bloqueado()).toBe(true);
-    cargarOperador();
-    expect(c.operadorId()).toBe(2);
-    expect(c.bloqueado()).toBe(false);
-  });
-
-  it('bloquea el registro y avisa si no se puede cargar el operador', () => {
-    http.expectOne('/operadores?offset=0&limit=1').flush({}, { status: 500, statusText: 'Error' });
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
-      'No se pudo cargar el operador',
-    );
-    c.form.setValue({ placa: 'ABC123' });
-    c.registrar();
-    http.expectNone('/estancias/salida');
-  });
-
   it('no envía la petición si la placa está vacía', () => {
-    cargarOperador();
     c.form.setValue({ placa: '' });
     c.registrar();
     fixture.detectChanges();
@@ -67,12 +40,11 @@ describe('Registrar salida', () => {
   });
 
   it('registra la salida con placa y operador y muestra la celda liberada', () => {
-    cargarOperador();
     c.form.setValue({ placa: ' abc123 ' });
     c.registrar();
     c.registrar();
     const req = http.expectOne('/estancias/salida');
-    expect(req.request.body).toEqual({ placa: 'ABC123', operador_id: 2 });
+    expect(req.request.body).toEqual({ placa: 'ABC123' });
     expect(c.saving()).toBe(true);
     req.flush(estancia);
     http.expectOne('/celdas/2').flush(celda);
@@ -84,7 +56,6 @@ describe('Registrar salida', () => {
   });
 
   it('confirma la salida aunque no se pueda consultar la celda', () => {
-    cargarOperador();
     c.form.setValue({ placa: 'ABC123' });
     c.registrar();
     http.expectOne('/estancias/salida').flush(estancia);
@@ -95,7 +66,6 @@ describe('Registrar salida', () => {
   });
 
   it('muestra tal cual el mensaje de la API en los errores 404, 409 y 422', () => {
-    cargarOperador();
     for (const [status, detail] of [
       [404, 'Vehículo no registrado.'],
       [409, 'El vehículo no está dentro del parqueadero.'],
@@ -118,10 +88,22 @@ describe('Registrar salida', () => {
   });
 
   it('avisa si no hay conexión', () => {
-    cargarOperador();
     c.form.setValue({ placa: 'ABC123' });
     c.registrar();
     http.expectOne('/estancias/salida').error(new ProgressEvent('error'));
     expect(c.error()).toContain('No se pudo conectar');
+  });
+
+  it('el formulario no pide operador y el cuerpo solo lleva la placa', () => {
+    expect(fixture.nativeElement.querySelector('select')).toBeNull();
+    expect(texto()).not.toContain('operador');
+    expect(Object.keys(c.form.controls)).toEqual(['placa']);
+    expect(c.bloqueado()).toBe(false);
+    c.form.setValue({ placa: 'abc123' });
+    c.registrar();
+    const req = http.expectOne('/estancias/salida');
+    expect(Object.keys(req.request.body)).toEqual(['placa']);
+    req.flush({}, { status: 403, statusText: 'Prohibido' });
+    expect(c.error()).toBe('No tienes permiso para entrar aquí.');
   });
 });

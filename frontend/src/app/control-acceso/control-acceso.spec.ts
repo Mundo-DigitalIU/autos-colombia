@@ -41,36 +41,28 @@ describe('Control de acceso', () => {
     http
       .expectOne('/celdas?offset=1&limit=100')
       .flush({ items: [{ ...celda, id: 5 }], total: 2, offset: 1, limit: 100 });
-    http
-      .expectOne('/operadores?offset=0&limit=100')
-      .flush({
-        items: [{ id: 4, nombre: 'Prueba', telefono: '001' }],
-        total: 1,
-        offset: 0,
-        limit: 100,
-      });
   });
   afterEach(() => http.verify());
 
   it('recorre todas las páginas y registra entrada normalizada sin fecha ni doble envío', () => {
     expect(c.celdas().length).toBe(2);
-    c.entrada.setValue({ placa: ' test-a ', celda_id: 2, operador_id: 4 });
+    c.entrada.setValue({ placa: ' test-a ', celda_id: 2 });
     c.registrarEntrada();
     c.registrarEntrada();
     const req = http.expectOne('/estancias/entrada');
-    expect(req.request.body).toEqual({ placa: 'TEST-A', celda_id: 2, operador_id: 4 });
+    expect(req.request.body).toEqual({ placa: 'TEST-A', celda_id: 2 });
     req.flush(stay);
     expect(c.exitoEntrada()).toContain('TEST-C');
     expect(c.exitoEntrada()).toContain('Bogotá');
   });
   it('rechaza blancos y muestra los conflictos de ocupación y referencias', () => {
-    c.entrada.setValue({ placa: ' ', celda_id: 2, operador_id: 4 });
+    c.entrada.setValue({ placa: ' ', celda_id: 2 });
     c.registrarEntrada();
     http.expectNone('/estancias/entrada');
     for (const [status, detail] of [
       [409, 'El vehículo ya está dentro.'],
       [409, 'La celda está ocupada.'],
-      [404, 'Operador no encontrado.'],
+      [404, 'Celda no encontrada.'],
     ] as const) {
       c.entrada.controls.placa.setValue('TEST-A');
       c.registrarEntrada();
@@ -80,7 +72,7 @@ describe('Control de acceso', () => {
     }
   });
   it('descarta respuestas antiguas y no permite salida al cambiar de placa', () => {
-    c.consulta.setValue({ placa: 'TEST-A', operador_id: 4 });
+    c.consulta.setValue({ placa: 'TEST-A' });
     c.buscar();
     c.consulta.controls.placa.setValue('TEST-B');
     http.expectOne('/estancias/vehiculo/TEST-A').flush(state);
@@ -93,14 +85,14 @@ describe('Control de acceso', () => {
     c.consulta.controls.placa.setValue('TEST-B');
     expect(c.estado()).toBeNull();
   });
-  it('consulta antes de salir, envía solo placa y operador y consulta fuera tras cerrar', () => {
-    c.consulta.setValue({ placa: 'test-a', operador_id: 4 });
+  it('consulta antes de salir, envía solo la placa (el operador es el de la sesión) y consulta fuera tras cerrar', () => {
+    c.consulta.setValue({ placa: 'test-a' });
     c.buscar();
     http.expectOne('/estancias/vehiculo/TEST-A').flush(state);
     c.registrarSalida();
     c.registrarSalida();
     const req = http.expectOne('/estancias/salida');
-    expect(req.request.body).toEqual({ placa: 'TEST-A', operador_id: 4 });
+    expect(req.request.body).toEqual({ placa: 'TEST-A' });
     req.flush({ ...stay, salida: '2026-10-19T16:00:00Z', operador_salida_id: 4 });
     http
       .expectOne('/estancias/vehiculo/TEST-A')
@@ -109,7 +101,7 @@ describe('Control de acceso', () => {
     expect(c.exitoSalida()).toContain('Salida registrada');
   });
   it('distingue no registrado y conexión fallida e invalida salida rechazada', () => {
-    c.consulta.setValue({ placa: 'TEST-A', operador_id: 4 });
+    c.consulta.setValue({ placa: 'TEST-A' });
     c.buscar();
     http
       .expectOne('/estancias/vehiculo/TEST-A')

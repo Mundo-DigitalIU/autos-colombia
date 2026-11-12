@@ -2,7 +2,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { EMPTY, Observable, expand, reduce, throwError, timeout } from 'rxjs';
 import { Celda } from '../models/celda';
-import { Operador } from '../models/operador';
 import {
   CeldasEstadoPagina,
   DentroPagina,
@@ -15,7 +14,6 @@ import {
 } from '../models/estancia';
 import { API_BASE_URL } from './api.service';
 import { CeldasService } from './celdas.service';
-import { OperadoresService } from './operadores.service';
 
 interface Pagina<T> {
   items: T[];
@@ -29,7 +27,6 @@ export class EstanciasService {
   private readonly http = inject(HttpClient);
   private readonly base = `${inject(API_BASE_URL)}/estancias`;
   private readonly cells = inject(CeldasService);
-  private readonly operators = inject(OperadoresService);
 
   entrada(data: EntradaCrear) {
     return this.http.post<Estancia>(`${this.base}/entrada`, data).pipe(timeout(15000));
@@ -65,9 +62,6 @@ export class EstanciasService {
   }
   celdas(): Observable<Celda[]> {
     return this.todas((offset) => this.cells.list(offset, 100));
-  }
-  operadores(): Observable<Operador[]> {
-    return this.todas((offset) => this.operators.list(offset, 100));
   }
 
   private todas<T>(load: (offset: number) => Observable<Pagina<T>>): Observable<T[]> {
