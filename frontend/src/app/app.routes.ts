@@ -57,6 +57,12 @@ export const routes: Routes = [
         title: 'Control de acceso | Autos Colombia',
         loadComponent: () => import('./control-acceso/control-acceso').then((m) => m.ControlAcceso),
       },
+      {
+        path: 'panel/cuentas',
+        title: 'Cuentas | Autos Colombia',
+        canActivate: [administradorGuard],
+        loadComponent: () => import('./cuentas/cuentas').then((m) => m.Cuentas),
+      },
       // Pantallas de la Iteración 1 (profesor): solo el administrador.
       {
         path: 'gestion/operadores',

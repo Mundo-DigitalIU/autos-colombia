@@ -1,0 +1,174 @@
+<section class="management" aria-labelledby="accounts-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">ADMINISTRACIÓN</span>
+      <h1 id="accounts-title">Cuentas</h1>
+      <p>Crea y elimina las cuentas de quienes usan el sistema.</p>
+    </div>
+    <button class="primary" type="button" (click)="nueva()" [disabled]="busy()">
+      Crear cuenta
+    </button>
+  </header>
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+  @if (showForm()) {
+    <section class="panel" aria-labelledby="account-form-title">
+      <h2 id="account-form-title">Crear cuenta</h2>
+      <p class="hint">
+        Todos los campos son obligatorios. Se crea el operador y su usuario al mismo tiempo.
+      </p>
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <fieldset [disabled]="busy()">
+          <legend class="sr-only">Datos de la cuenta</legend>
+          <div class="form-grid">
+            @for (campo of campos; track campo.key) {
+              <div class="field">
+                <label [for]="'cuenta-' + campo.key">{{ campo.label }}</label
+                ><input
+                  [type]="campo.tipo"
+                  [id]="'cuenta-' + campo.key"
+                  [formControlName]="campo.key"
+                  [attr.autocomplete]="campo.key === 'contrasena' ? 'new-password' : 'off'"
+                  [attr.aria-invalid]="!!errorDeCampo(campo.key)"
+                  [attr.aria-describedby]="'cuenta-' + campo.key + '-error'"
+                />
+                @if (campo.key === 'contrasena') {
+                  <span class="field-hint">Mínimo 8 caracteres.</span>
+                }
+                <span class="field-error" [id]="'cuenta-' + campo.key + '-error'">{{
+                  errorDeCampo(campo.key)
+                }}</span>
+              </div>
+            }
+            <div class="field">
+              <label for="cuenta-rol">Rol</label>
+              <select id="cuenta-rol" formControlName="rol">
+                @for (rol of roles; track rol.valor) {
+                  <option [value]="rol.valor">{{ rol.texto }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">
+              {{ saving() ? 'Creando…' : 'Crear cuenta' }}</button
+            ><button type="button" (click)="cancelar()">Cancelar</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  }
+  @if (pendingDelete(); as cuenta) {
+    <section
+      class="panel confirmation"
+      role="alertdialog"
+      aria-labelledby="delete-account-title"
+      aria-describedby="delete-account-description"
+    >
+      <h2 id="delete-account-title">Eliminar cuenta {{ cuenta.usuario }}</h2>
+      <p id="delete-account-description">
+        ¿Quieres eliminar la cuenta <strong>{{ cuenta.usuario }}</strong> de {{ cuenta.nombre }}? La
+        persona ya no podrá entrar al sistema. Esta acción no se puede deshacer.
+      </p>
+      <div class="actions">
+        <button type="button" (click)="cancelar()" [disabled]="busy()">Cancelar eliminación</button
+        ><button type="button" class="danger" (click)="eliminar()" [disabled]="busy()">
+          {{ saving() ? 'Eliminando…' : 'Confirmar eliminación' }}
+        </button>
+      </div>
+    </section>
+  }
+  <section class="panel list" aria-label="Listado de cuentas" [attr.aria-busy]="loading()">
+    <div class="list-heading">
+      <h2>
+        Cuentas <span class="count">{{ total() }}</span>
+      </h2>
+      <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
+    </div>
+    <form class="toolbar" (submit)="$event.preventDefault(); buscar()" role="search">
+      <div class="field">
+        <label for="cuentas-buscar">Buscar por nombre o usuario</label>
+        <input id="cuentas-buscar" type="search" [formControl]="buscador" autocomplete="off" />
+      </div>
+      <div class="actions">
+        <button type="submit" class="primary" [disabled]="busy()">Buscar</button
+        ><button type="button" (click)="limpiarBusqueda()" [disabled]="busy()">Limpiar</button>
+      </div>
+    </form>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando cuentas…</p>
+    } @else if (listError()) {
+      <p class="notice error" role="alert">{{ listError() }}</p>
+    } @else if (!items().length) {
+      <div class="empty">
+        @if (consulta()) {
+          <h3>No hay cuentas con esa búsqueda.</h3>
+        } @else {
+          <h3>Todavía no hay cuentas creadas.</h3>
+        }
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">
+            Cuentas
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Usuario</th>
+              <th scope="col">Rol</th>
+              <th scope="col">Teléfono</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cuenta of items(); track cuenta.id) {
+              <tr>
+                <th scope="row">{{ cuenta.nombre }}</th>
+                <td>{{ cuenta.usuario }}</td>
+                <td>
+                  <span class="type-tag">{{ rolTexto(cuenta.rol) }}</span>
+                </td>
+                <td>{{ cuenta.telefono }}</td>
+                <td class="row-actions">
+                  <button
+                    type="button"
+                    class="delete-link"
+                    (click)="confirmarEliminar(cuenta)"
+                    [disabled]="busy()"
+                    [attr.aria-label]="'Eliminar la cuenta ' + cuenta.usuario"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación de cuentas">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button
+          type="button"
+          (click)="load(offset() - limit)"
+          [disabled]="busy() || offset() === 0"
+        >
+          Anterior</button
+        ><button
+          type="button"
+          (click)="load(offset() + limit)"
+          [disabled]="busy() || offset() + limit >= total()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </nav>
+  </section>
+</section>
