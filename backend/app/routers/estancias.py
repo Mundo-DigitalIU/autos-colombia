@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -52,10 +52,13 @@ def historial(
 @router.get("/celdas", response_model=CeldasEstadoPagina)
 def celdas(
     session: DatabaseSession,
+    q: Annotated[str | None, Query(max_length=50)] = None,
+    tipo: Literal["MOTO", "AUTOMOVIL", "CAMIONETA"] | None = None,
+    estado: Literal["DISPONIBLE", "OCUPADA"] | None = None,
     offset: Annotated[int, Query(ge=0, le=9223372036854775807)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> CeldasEstadoPagina:
-    return ServicioEstancia(session).celdas(offset, limit)
+    return ServicioEstancia(session).celdas(offset, limit, q, tipo, estado)
 
 
 @router.get("/vehiculo/{placa}", response_model=EstadoVehiculoRespuesta)

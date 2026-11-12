@@ -13,6 +13,7 @@ from app.schemas.estancia import (
     EstanciaHistorialRespuesta, HistorialPagina, CeldaEstadoRespuesta, CeldasEstadoPagina,
 )
 from app.schemas.vehiculo import VehiculoRespuesta
+from app.services.comun import contiene
 
 
 # Colombia no usa horario de verano: su hora local es siempre UTC-5.
@@ -216,22 +217,38 @@ class ServicioEstancia:
         return HistorialPagina(items=items, total=total, offset=offset, limit=limit)
 
     @transaccion
-    def celdas(self, offset: int, limit: int) -> CeldasEstadoPagina:
-        """Celdas con su estado: la celda está ocupada si tiene una estancia abierta."""
+    def celdas(self, offset: int, limit: int, q: str | None = None, tipo: str | None = None,
+               estado: str | None = None) -> CeldasEstadoPagina:
+        """Celdas con su estado: la celda está ocupada si tiene una estancia abierta.
+
+        `q` (código) y `tipo` acotan también los contadores `disponibles` y `ocupadas`;
+        `estado` solo acota la lista y `total`, para poder mostrar ambos contadores a la vez.
+        """
         ocupada = select(Estancia.id).where(
             Estancia.celda_id == Celda.id, Estancia.salida.is_(None)
         ).correlate(Celda).exists()
-        total = self.session.scalar(select(func.count()).select_from(Celda))
-        ocupadas = self.session.scalar(select(func.count()).select_from(Celda).where(ocupada))
+        filtros = []
+        texto = (q or "").strip()
+        if texto:
+            filtros.append(contiene(Celda.codigo, texto))
+        if tipo is not None:
+            filtros.append(tipo_celda_normalizado() == normalizar_tipo(tipo))
+        ocupadas = self.session.scalar(select(func.count()).select_from(Celda).where(*filtros, ocupada))
+        todas = self.session.scalar(select(func.count()).select_from(Celda).where(*filtros))
+        if estado == "OCUPADA":
+            filtros.append(ocupada)
+        elif estado == "DISPONIBLE":
+            filtros.append(~ocupada)
+        total = self.session.scalar(select(func.count()).select_from(Celda).where(*filtros))
         filas = self.session.execute(
-            select(Celda, ocupada.label("ocupada")).order_by(Celda.id).offset(offset).limit(limit)
+            select(Celda, ocupada.label("ocupada")).where(*filtros).order_by(Celda.id).offset(offset).limit(limit)
         ).all()
         items = [
             CeldaEstadoRespuesta(id=celda.id, codigo=celda.codigo, tipo=celda.tipo,
                                  estado="OCUPADA" if esta_ocupada else "DISPONIBLE")
             for celda, esta_ocupada in filas
         ]
-        return CeldasEstadoPagina(items=items, total=total, disponibles=total - ocupadas,
+        return CeldasEstadoPagina(items=items, total=total, disponibles=todas - ocupadas,
                                   ocupadas=ocupadas, offset=offset, limit=limit)
 
     @transaccion
