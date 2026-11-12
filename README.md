@@ -140,7 +140,7 @@ npm.cmd ci
 npm.cmd start -- --host 127.0.0.1 --port 4200
 ```
 
-Abre <http://127.0.0.1:4200>. En la pantalla de inicio debe aparecer "Servicio disponible", que confirma que el frontend se comunica con el backend.
+Abre <http://127.0.0.1:4200>: verás la pantalla de inicio de sesión. Entra con una de las cuentas que creó `seed.py` (`admin` u `operador`) o con una creada desde Cuentas. La pantalla de inicio (`/inicio`) muestra "Servicio disponible" cuando el frontend se comunica con el backend.
 
 ## Rutas de la API
 
@@ -161,7 +161,7 @@ La base del profesor también incluye el CRUD de `/vehiculos`, `/celdas` y `/ope
 
 ## Iteración 2 (backend): usuarios con roles, clientes y celdas
 
-Todas las rutas exigen iniciar sesión, salvo `POST /auth/login` y `GET /health`. El frontend todavía no usa estas rutas: la interfaz de la Iteración 1 hay que adaptarla (inicio de sesión, encabezado `Authorization` y el cuerpo de entrada y salida sin `operador_id`).
+Todas las rutas exigen iniciar sesión, salvo `POST /auth/login` y `GET /health`. El frontend ya las usa (ver "Pantallas del frontend" más abajo).
 
 ### Roles
 
@@ -188,6 +188,23 @@ Sin sesión o con la sesión vencida la API responde 401 (`Tu sesión terminó. 
 `POST /estancias/entrada` y `POST /estancias/salida` ya no reciben `operador_id`: el operador es el de la sesión. El tipo de una celda solo puede ser `MOTO`, `AUTOMOVIL` o `CAMIONETA`, y al registrar una entrada con `celda_id` la celda debe ser del tipo del vehículo.
 
 En `PUT /clientes/{id}` los vehículos con `id` se editan y los que no lo traen se crean; los que no aparecen en la lista se conservan.
+
+### Pantallas del frontend (Iteración 2)
+
+Al abrir <http://127.0.0.1:4200> sin sesión, la aplicación lleva a `/login`. Con sesión, el menú superior muestra el nombre, el rol y el botón **Cerrar sesión** (revoca la sesión en el servidor y vuelve a `/login` con "Cerraste sesión."). Si la API responde 401 se borra la sesión y se vuelve a `/login` con "Tu sesión terminó. Inicia sesión otra vez."; si responde 403 se muestra "No tienes permiso para entrar aquí.". El token se guarda en `sessionStorage` (solo dura mientras la pestaña esté abierta) y un interceptor lo envía en `Authorization: Bearer`.
+
+| Ruta | Pantalla | Quién entra |
+|---|---|---|
+| `/login` | Iniciar sesión | Público |
+| `/entrada`, `/salida` | Registrar entrada y salida (el operador es el de la sesión) | Ambos roles |
+| `/dentro`, `/historial` | Vehículos dentro e historial | Ambos roles |
+| `/estado-celdas` | Estado de las celdas, solo consulta | Ambos roles |
+| `/panel/clientes` | Clientes: buscar y registrar con uno o varios vehículos; editar y eliminar solo el administrador | Ambos roles |
+| `/panel/cuentas` | Cuentas: lista, crear y eliminar | Administrador |
+| `/panel/celdas` | Gestionar celdas: buscar, filtrar por tipo y estado, crear, editar y eliminar | Administrador |
+| `/sin-permiso` | Aviso que ve un operador que entra a una ruta de administrador | Con sesión |
+
+Las rutas `/panel/*` se llaman así para no chocar con los prefijos que el proxy de desarrollo (`frontend/proxy.conf.json`) envía a la API: `/estancias`, `/celdas`, `/vehiculos`, `/operadores`, `/auth`, `/cuentas`, `/clientes` y `/health`. El menú del operador es Entrada, Salida, Dentro, Historial, Celdas y Clientes; el del administrador añade Cuentas y Gestionar celdas.
 
 ### Migración 0003
 
@@ -241,7 +258,7 @@ $env:RUN_POSTGRES_TESTS = '1'
 Remove-Item Env:RUN_POSTGRES_TESTS
 ```
 
-En la última ejecución completa pasaron las 223 pruebas del backend (187 sin PostgreSQL; las 36 restantes son de integración). Las del frontend no se volvieron a correr tras los cambios del backend. Las de integración exigen que la base se llame `autos_colombia` y esté en la revisión `0003`.
+En la última ejecución completa pasaron las 223 pruebas del backend (187 sin PostgreSQL; las 36 restantes son de integración). Del frontend pasaron las 146. Las de integración exigen que la base se llame `autos_colombia` y esté en la revisión `0003`.
 
 ## Estado
 
@@ -250,8 +267,8 @@ En la última ejecución completa pasaron las 223 pruebas del backend (187 sin P
 | Base de datos y migraciones | Listo |
 | Backend de la Iteración 1 | Listo, con pruebas |
 | Backend de la Iteración 2 (sesiones, roles, cuentas, clientes, celdas) | Listo, con pruebas |
-| Frontend de la Iteración 2 (inicio de sesión y pantallas nuevas) | Pendiente |
-| Pantallas de Entrada, Salida, Dentro, Historial y Celdas | En construcción |
+| Frontend de la Iteración 2 (inicio de sesión, roles, cuentas, clientes y gestión de celdas) | Listo, con pruebas |
+| Pantallas de Entrada, Salida, Dentro, Historial y Celdas | Listas, con inicio de sesión |
 
 ## Iteraciones del proyecto
 

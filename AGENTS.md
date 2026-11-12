@@ -33,7 +33,14 @@ instalar y ejecutar los proyectos en Windows está en `README.md`.
   exactas, incluidas las transitivas.
 - `backend/.venv/`: entorno virtual local, excluido de Git.
 - `frontend/src/app/`: componentes standalone, configuración y rutas Angular.
-- `frontend/src/app/home/`: bienvenida y estado de salud de la API.
+- `frontend/src/app/home/`: estado de salud de la API (ruta `/inicio`).
+- `frontend/src/app/auth/`, `services/auth.service.ts`: sesión con signals (token en `sessionStorage`,
+  siempre dentro de `try/catch`), interceptor `Authorization: Bearer` (401 → `/login`, 403 → aviso) y
+  guards `sesionGuard`, `administradorGuard` y `visitanteGuard`.
+- `frontend/src/app/{login,sin-permiso,cuentas,clientes,gestion-celdas}/`: pantallas de la Iteración 2.
+  Las rutas de administración viven en `/panel/*` para no chocar con el proxy. Comparten
+  `shared/gestion.css`; `shared/errores.ts` muestra el `detail` de la API tal cual.
+- `frontend/src/app/testing/sesion-prueba.ts`: deja una sesión guardada para las pruebas.
 - `frontend/src/app/vehiculos/`: formulario reactivo y listado paginado de vehículos.
 - `frontend/src/app/celdas/`: gestión de celdas; `CeldasService` reutiliza la base de API.
 - `frontend/src/app/services/api.service.ts`: llamadas HTTP y base de API centralizadas.
@@ -80,7 +87,7 @@ instalar y ejecutar los proyectos en Windows está en `README.md`.
   importar módulos. No registrar credenciales, URL de conexión ni errores crudos
   del controlador. Verificar PostgreSQL con `backend/check_db.py`; las pruebas
   simuladas no prueban que exista una conexión local real.
-- La pantalla consulta `/health` mediante `HttpClient` al cargarse. El proxy de
+- La pantalla `/inicio` consulta `/health` mediante `HttpClient` al cargarse. El proxy de
   desarrollo en `frontend/proxy.conf.json` dirige `/health`, `/auth`, `/cuentas`,
   `/clientes`, `/estancias`, `/celdas`, `/operadores` y `/vehiculos` (y sus subrutas) a `127.0.0.1:8000`. La pantalla de gestión usa `/gestion/vehiculos`
   para no colisionar con las rutas API. Las llamadas pasan por `ApiService`.
