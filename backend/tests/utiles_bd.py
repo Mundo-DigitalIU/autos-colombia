@@ -1,5 +1,6 @@
 """Ayudas para las pruebas de integración: todo ocurre en una transacción que se revierte."""
 import os
+import secrets
 from contextlib import contextmanager
 from uuid import uuid4
 
@@ -16,7 +17,7 @@ solo_postgres = pytest.mark.skipif(
     os.getenv("RUN_POSTGRES_TESTS") != "1", reason="Requiere PostgreSQL local."
 )
 
-CLAVE_PRUEBA = "clave-de-prueba-123"
+CLAVE_PRUEBA = secrets.token_urlsafe(12)  # aleatoria en cada ejecución: ninguna contraseña queda escrita
 
 
 def token_unico(prefijo: str = "T") -> str:

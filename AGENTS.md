@@ -17,7 +17,17 @@ instalar y ejecutar los proyectos en Windows está en `README.md`.
 - `backend/app/services/vehiculo.py`: lógica de vehículos, transacciones y errores públicos.
 - `backend/app/schemas/celda.py`, `app/routers/celdas.py` y `app/services/celda.py`:
   CRUD de celdas con código normalizado y tipo libre obligatorio.
-- `backend/migrations/`: revisiones Alembic; `backend/alembic.ini` reutiliza la configuración privada.
+- `backend/app/security.py`, `app/auth.py`, `app/services/auth.py` y `app/routers/auth.py`: contraseñas
+  con scrypt, sesiones con token (solo se guarda su SHA-256), dependencias `sesion_actual` y
+  `requiere_rol`, y `/auth/login` y `/auth/logout`. Todas las rutas exigen sesión salvo
+  `/auth/login` y `/health`.
+- `backend/app/{schemas,services,routers}/{cuenta,cliente}.py`: cuentas (solo ADMINISTRADOR) y
+  clientes con sus vehículos. `app/services/comun.py` reúne utilidades de los servicios.
+- `backend/seed.py`: datos de prueba idempotentes; las contraseñas de `admin` y `operador` salen
+  de `SEED_ADMIN_CLAVE` y `SEED_OPERADOR_CLAVE` o se generan una sola vez. No fijar contraseñas en el código.
+- `backend/tests/conftest.py` y `tests/utiles_bd.py`: sesión simulada de ADMINISTRADOR para las pruebas
+  (un módulo que necesita la autenticación real define `SIN_SESION_FALSA = True`) y ayudas de integración.
+- `backend/migrations/`: revisiones Alembic (la `0003` añade usuarios, sesiones y clientes); `backend/alembic.ini` reutiliza la configuración privada.
 - `backend/.env.example`: plantilla pública; conservar cualquier `.env` existente y privado.
 - `backend/requirements.txt`: dependencias de ejecución y pruebas con versiones
   exactas, incluidas las transitivas.
@@ -71,8 +81,8 @@ instalar y ejecutar los proyectos en Windows está en `README.md`.
   del controlador. Verificar PostgreSQL con `backend/check_db.py`; las pruebas
   simuladas no prueban que exista una conexión local real.
 - La pantalla consulta `/health` mediante `HttpClient` al cargarse. El proxy de
-  desarrollo en `frontend/proxy.conf.json` dirige `/health`, `/vehiculos` y
-  `/vehiculos/**` a `127.0.0.1:8000`. La pantalla de gestión usa `/gestion/vehiculos`
+  desarrollo en `frontend/proxy.conf.json` dirige `/health`, `/auth`, `/cuentas`,
+  `/clientes`, `/estancias`, `/celdas`, `/operadores` y `/vehiculos` (y sus subrutas) a `127.0.0.1:8000`. La pantalla de gestión usa `/gestion/vehiculos`
   para no colisionar con las rutas API. Las llamadas pasan por `ApiService`.
   Mantener rutas relativas y documentar cualquier integración que se añada.
 
@@ -119,7 +129,7 @@ La prueba actual comprueba `/health` sin iniciar un servidor externo. Starlette
 puede emitir un aviso de deprecación sobre `httpx`; distinguirlo de un fallo.
 
 Las pruebas de integración de vehículos se habilitan con `RUN_POSTGRES_TESTS=1`
-y requieren `autos_colombia` con la revisión `0001`. Usan rollback exterior y
+y requieren `autos_colombia` con la revisión `0003`. Usan rollback exterior y
 savepoints: no crear tablas ni alterar migraciones para probar. Los valores de
 las secuencias pueden avanzar. Ver `backend/README.md` para comandos completos.
 

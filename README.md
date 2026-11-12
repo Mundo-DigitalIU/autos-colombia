@@ -21,7 +21,7 @@ En esta primera entrega me enfoqué en controlar quién entra y quién sale del 
 
 Cuando algo no se puede hacer (vehículo no registrado, ya está dentro, no hay celdas), el sistema responde con un mensaje claro en español (RF-10).
 
-**No incluye todavía:** inicio de sesión, gestión de usuarios y celdas, novedades ni pagos. Eso queda para las siguientes iteraciones. Por ahora hay un solo operador, que se carga con datos de prueba.
+**No incluye todavía:** novedades ni pagos. El inicio de sesión, los usuarios con roles, los clientes y la administración de celdas ya están en el backend (ver más abajo la Iteración 2); falta adaptar la interfaz.
 
 ## De dónde parte este proyecto
 
@@ -129,7 +129,7 @@ En orden, esos comandos: crean el entorno virtual, instalan las dependencias, co
 - La salud de la API: <http://127.0.0.1:8000/health>
 - La documentación interactiva, donde se puede probar cada ruta: <http://127.0.0.1:8000/docs>
 
-`seed.py` solo inserta datos y se puede ejecutar varias veces sin duplicar nada. Carga 10 vehículos (4 automóviles, 1 camioneta y 5 motos), 10 celdas y 1 operador.
+`seed.py` solo inserta datos y se puede ejecutar varias veces sin duplicar nada. Carga 10 vehículos (4 automóviles, 1 camioneta y 5 motos), 80 celdas, 3 clientes y las cuentas `admin` y `operador` (ver la Iteración 2).
 
 ### 3. Frontend
 
@@ -148,8 +148,8 @@ Estas son las de esta iteración, todas bajo `/estancias`:
 
 | Método y ruta | Qué hace | Respuesta |
 |---|---|---|
-| `POST /estancias/entrada` | Registra una entrada. Recibe `placa` y `operador_id`; `celda_id` es opcional | 201 |
-| `POST /estancias/salida` | Registra una salida. Recibe `placa` y `operador_id` | 200 |
+| `POST /estancias/entrada` | Registra una entrada. Recibe `placa`; `celda_id` es opcional. El operador es el de la sesión | 201 |
+| `POST /estancias/salida` | Registra una salida. Recibe `placa`. El operador es el de la sesión | 200 |
 | `GET /estancias/vehiculo/{placa}` | Estado de un vehículo: si está dentro y en qué celda | 200 |
 | `GET /estancias/dentro` | Vehículos que están dentro | 200 |
 | `GET /estancias/historial` | Historial. Filtros opcionales: `placa`, `desde`, `hasta` (formato `AAAA-MM-DD`) | 200 |
@@ -157,7 +157,73 @@ Estas son las de esta iteración, todas bajo `/estancias`:
 
 Los listados se paginan con `offset` y `limit` (de 1 a 100). Los errores usan estos códigos: 404 si algo no existe, 409 si hay un conflicto (por ejemplo, el vehículo ya está dentro o no hay celdas), 422 si los datos no son válidos y 503 si falla la base de datos.
 
-La base del profesor también incluye el CRUD de `/vehiculos`, `/celdas` y `/operadores`.
+La base del profesor también incluye el CRUD de `/vehiculos`, `/celdas` y `/operadores`; con la Iteración 2 exigen sesión, y `/operadores` es solo del administrador.
+
+## Iteración 2 (backend): usuarios con roles, clientes y celdas
+
+Todas las rutas exigen iniciar sesión, salvo `POST /auth/login` y `GET /health`. El frontend todavía no usa estas rutas: la interfaz de la Iteración 1 hay que adaptarla (inicio de sesión, encabezado `Authorization` y el cuerpo de entrada y salida sin `operador_id`).
+
+### Roles
+
+| Rol | Puede |
+|---|---|
+| `OPERADOR` | Registrar entradas y salidas, consultar estancias, historial y celdas, registrar y consultar clientes y vehículos. |
+| `ADMINISTRADOR` | Todo lo anterior, más: gestionar cuentas (`/cuentas`), operadores (`/operadores`), crear, editar y eliminar celdas, y modificar o eliminar clientes y vehículos. |
+
+Sin sesión o con la sesión vencida la API responde 401 (`Tu sesión terminó. Inicia sesión otra vez.`); con un rol insuficiente, 403 (`No tienes permiso para entrar aquí.`).
+
+### Rutas nuevas
+
+| Método y ruta | Rol | Qué hace |
+|---|---|---|
+| `POST /auth/login` | público | Recibe `usuario` y `contrasena`; devuelve `token`, `rol`, `nombre` y `expira`. 401 si no coinciden |
+| `POST /auth/logout` | cualquiera | Revoca la sesión actual |
+| `POST /cuentas`, `GET /cuentas?q=`, `DELETE /cuentas/{id}` | administrador | Crea (operador y usuario en una transacción), lista y elimina cuentas. No se puede eliminar la propia |
+| `POST /clientes`, `GET /clientes?q=`, `GET /clientes/{id}` | ambos | Registra un cliente con sus vehículos, busca por documento, nombre o placa y consulta |
+| `PUT /clientes/{id}`, `DELETE /clientes/{id}`, `DELETE /clientes/{id}/vehiculos/{vehiculo_id}` | administrador | Edita, y elimina solo si los vehículos no tienen estancias |
+| `GET /celdas`, `GET /celdas/{id}` | ambos | Lista y consulta celdas |
+| `POST /celdas`, `PATCH /celdas/{id}`, `DELETE /celdas/{id}` | administrador | Crea, edita (el tipo no cambia mientras está ocupada) y elimina (solo sin historial) |
+| `GET /estancias/celdas?q=&tipo=&estado=` | ambos | Estados de las celdas, con filtros opcionales por código, tipo y estado |
+
+`POST /estancias/entrada` y `POST /estancias/salida` ya no reciben `operador_id`: el operador es el de la sesión. El tipo de una celda solo puede ser `MOTO`, `AUTOMOVIL` o `CAMIONETA`, y al registrar una entrada con `celda_id` la celda debe ser del tipo del vehículo.
+
+En `PUT /clientes/{id}` los vehículos con `id` se editan y los que no lo traen se crean; los que no aparecen en la lista se conservan.
+
+### Migración 0003
+
+La revisión `0003` crea `usuario`, `sesion` y `cliente`, añade `vehiculo.cliente_id` y una restricción en `celda.tipo` creada `NOT VALID`: no revisa las filas que ya existían (por ejemplo `Libre`), solo las inserciones y cambios nuevos. Para revisar el SQL sin tocar la base:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head --sql
+```
+
+Para aplicarla (esto sí modifica el esquema), en la carpeta `backend`:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head
+```
+
+### Cuentas de prueba (seed)
+
+`seed.py` ahora carga 80 celdas (`A-01` a `A-55` de automóvil, `K-01` a `K-05` de camioneta y `M-01` a `M-20` de moto), 3 clientes de ejemplo con los vehículos existentes, el perfil "Operador Portería" con la cuenta `operador` y el perfil "Administrador" con la cuenta `admin`. Las contraseñas se leen de variables de entorno; si faltan, el seed genera una aleatoria y la muestra **una sola vez**:
+
+```powershell
+$env:SEED_ADMIN_CLAVE = Read-Host 'Contraseña de admin'
+$env:SEED_OPERADOR_CLAVE = Read-Host 'Contraseña de operador'
+.\.venv\Scripts\python.exe seed.py
+Remove-Item Env:SEED_ADMIN_CLAVE, Env:SEED_OPERADOR_CLAVE
+```
+
+Una cuenta que ya existe conserva su contraseña. Nunca escribas contraseñas en el código, en el README ni en los commits. Las contraseñas se guardan con `scrypt` y de las sesiones solo se guarda el SHA-256 del token, que vence a las 8 horas.
+
+Ejemplo de inicio de sesión desde PowerShell:
+
+```powershell
+$clave = Read-Host 'Contraseña' -AsSecureString
+$cuerpo = @{ usuario = 'admin'; contrasena = [System.Net.NetworkCredential]::new('', $clave).Password } | ConvertTo-Json
+$sesion = Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/auth/login -ContentType 'application/json' -Body $cuerpo
+Invoke-RestMethod -Uri http://127.0.0.1:8000/estancias/dentro -Headers @{ Authorization = "Bearer $($sesion.token)" }
+```
 
 ## Pruebas
 
@@ -175,7 +241,7 @@ $env:RUN_POSTGRES_TESTS = '1'
 Remove-Item Env:RUN_POSTGRES_TESTS
 ```
 
-En la última ejecución completa pasaron las 143 pruebas del backend y las 72 del frontend. Las de integración exigen que la base se llame `autos_colombia` y esté en la revisión `0002`.
+En la última ejecución completa pasaron las 223 pruebas del backend (187 sin PostgreSQL; las 36 restantes son de integración). Las del frontend no se volvieron a correr tras los cambios del backend. Las de integración exigen que la base se llame `autos_colombia` y esté en la revisión `0003`.
 
 ## Estado
 
@@ -183,6 +249,8 @@ En la última ejecución completa pasaron las 143 pruebas del backend y las 72 d
 |---|---|
 | Base de datos y migraciones | Listo |
 | Backend de la Iteración 1 | Listo, con pruebas |
+| Backend de la Iteración 2 (sesiones, roles, cuentas, clientes, celdas) | Listo, con pruebas |
+| Frontend de la Iteración 2 (inicio de sesión y pantallas nuevas) | Pendiente |
 | Pantallas de Entrada, Salida, Dentro, Historial y Celdas | En construcción |
 
 ## Iteraciones del proyecto
