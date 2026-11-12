@@ -53,6 +53,11 @@ export interface FiltrosHistorial {
   hasta?: string;
 }
 export type EstadoCelda = 'DISPONIBLE' | 'OCUPADA';
+export interface FiltrosCeldas {
+  q?: string;
+  tipo?: TipoVehiculo | '';
+  estado?: EstadoCelda | '';
+}
 export interface CeldaEstado {
   id: number;
   codigo: string;

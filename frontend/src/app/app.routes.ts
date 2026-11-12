@@ -63,6 +63,12 @@ export const routes: Routes = [
         loadComponent: () => import('./clientes/clientes').then((m) => m.Clientes),
       },
       {
+        path: 'panel/celdas',
+        title: 'Gestionar celdas | Autos Colombia',
+        canActivate: [administradorGuard],
+        loadComponent: () => import('./gestion-celdas/gestion-celdas').then((m) => m.GestionCeldas),
+      },
+      {
         path: 'panel/cuentas',
         title: 'Cuentas | Autos Colombia',
         canActivate: [administradorGuard],

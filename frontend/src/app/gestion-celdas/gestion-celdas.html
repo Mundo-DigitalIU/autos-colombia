@@ -1,0 +1,201 @@
+<section class="management" aria-labelledby="manage-cells-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">ADMINISTRACIÓN</span>
+      <h1 id="manage-cells-title">Gestionar celdas</h1>
+      <p>Crea, edita y elimina las celdas del parqueadero.</p>
+    </div>
+    <button class="primary" type="button" (click)="nueva()" [disabled]="busy()">Crear celda</button>
+  </header>
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+  @if (showForm()) {
+    <section class="panel" aria-labelledby="cell-form-title">
+      <h2 id="cell-form-title">{{ editing() === null ? 'Crear celda' : 'Editar celda' }}</h2>
+      <p class="hint">El código se guarda en mayúsculas. El tipo es MOTO, AUTOMOVIL o CAMIONETA.</p>
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <fieldset [disabled]="busy()">
+          <legend class="sr-only">Datos de la celda</legend>
+          <div class="form-grid">
+            <div class="field">
+              <label for="celda-codigo">Código</label>
+              <input
+                id="celda-codigo"
+                type="text"
+                formControlName="codigo"
+                autocomplete="off"
+                [attr.aria-invalid]="!!errorCodigo()"
+                aria-describedby="celda-codigo-error"
+              />
+              <span class="field-error" id="celda-codigo-error">{{ errorCodigo() }}</span>
+            </div>
+            <div class="field">
+              <label for="celda-tipo">Tipo</label>
+              <select
+                id="celda-tipo"
+                formControlName="tipo"
+                [attr.aria-invalid]="!!errorTipo()"
+                aria-describedby="celda-tipo-error celda-tipo-aviso"
+              >
+                <option value="">Selecciona un tipo</option>
+                @for (tipo of tipos; track tipo) {
+                  <option [value]="tipo">{{ tipo }}</option>
+                }
+              </select>
+              @if (tipoBloqueado()) {
+                <span class="warning" id="celda-tipo-aviso" role="note">{{
+                  avisoTipoOcupada
+                }}</span>
+              }
+              <span class="field-error" id="celda-tipo-error">{{ errorTipo() }}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">
+              {{ saving() ? 'Guardando…' : 'Guardar celda' }}</button
+            ><button type="button" (click)="cancelar()">Cancelar</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  }
+  @if (pendingDelete(); as celda) {
+    <section
+      class="panel confirmation"
+      role="alertdialog"
+      aria-labelledby="delete-cell-title"
+      aria-describedby="delete-cell-description"
+    >
+      <h2 id="delete-cell-title">Eliminar celda {{ celda.codigo }}</h2>
+      <p id="delete-cell-description">
+        ¿Quieres eliminar la celda <strong>{{ celda.codigo }}</strong> ({{ celda.tipo }})? Esta
+        acción no se puede deshacer.
+      </p>
+      <div class="actions">
+        <button type="button" (click)="cancelar()" [disabled]="busy()">Cancelar eliminación</button
+        ><button type="button" class="danger" (click)="eliminar()" [disabled]="busy()">
+          {{ saving() ? 'Eliminando…' : 'Confirmar eliminación' }}
+        </button>
+      </div>
+    </section>
+  }
+  <section class="panel list" aria-label="Listado de celdas" [attr.aria-busy]="loading()">
+    <div class="list-heading">
+      <h2>
+        Celdas <span class="count">{{ total() }}</span>
+      </h2>
+      <span class="hint" data-testid="resumen"
+        >{{ disponibles() }} disponibles · {{ ocupadas() }} ocupadas</span
+      >
+      <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
+    </div>
+    <form class="toolbar" (submit)="$event.preventDefault(); buscar()" role="search">
+      <div class="field">
+        <label for="celdas-buscar">Buscar por código</label>
+        <input id="celdas-buscar" type="search" [formControl]="buscador" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="celdas-tipo">Tipo</label>
+        <select id="celdas-tipo" [formControl]="filtroTipo" (change)="buscar()">
+          <option value="">Todos los tipos</option>
+          @for (tipo of tipos; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="celdas-estado">Estado</label>
+        <select id="celdas-estado" [formControl]="filtroEstado" (change)="buscar()">
+          <option value="">Todos los estados</option>
+          <option value="DISPONIBLE">Disponible</option>
+          <option value="OCUPADA">Ocupada</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button type="submit" class="primary" [disabled]="busy()">Buscar</button
+        ><button type="button" (click)="limpiarFiltros()" [disabled]="busy()">Limpiar</button>
+      </div>
+    </form>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando celdas…</p>
+    } @else if (listError()) {
+      <p class="notice error" role="alert">{{ listError() }}</p>
+    } @else if (!items().length) {
+      <div class="empty">
+        <h3>No hay celdas con ese filtro.</h3>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">
+            Celdas del parqueadero
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (celda of items(); track celda.id) {
+              <tr>
+                <th scope="row">{{ celda.codigo }}</th>
+                <td>{{ celda.tipo }}</td>
+                <td>
+                  <span
+                    class="tag"
+                    [class.available]="celda.estado === 'DISPONIBLE'"
+                    [class.occupied]="celda.estado === 'OCUPADA'"
+                    >{{ celda.estado === 'OCUPADA' ? 'Ocupada' : 'Disponible' }}</span
+                  >
+                </td>
+                <td class="row-actions">
+                  <button
+                    type="button"
+                    (click)="editar(celda)"
+                    [disabled]="busy()"
+                    [attr.aria-label]="'Editar la celda ' + celda.codigo"
+                  >
+                    Editar</button
+                  ><button
+                    type="button"
+                    class="delete-link"
+                    (click)="confirmarEliminar(celda)"
+                    [disabled]="busy()"
+                    [attr.aria-label]="'Eliminar la celda ' + celda.codigo"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación de celdas">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button
+          type="button"
+          (click)="load(offset() - limit)"
+          [disabled]="busy() || offset() === 0"
+        >
+          Anterior</button
+        ><button
+          type="button"
+          (click)="load(offset() + limit)"
+          [disabled]="busy() || offset() + limit >= total()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </nav>
+  </section>
+</section>

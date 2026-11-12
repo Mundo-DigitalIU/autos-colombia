@@ -67,4 +67,14 @@ describe('Estado de las celdas', () => {
     fixture.componentInstance.load();
     http.expectOne(url).flush(respuesta);
   });
+
+  it('es solo de consulta: no ofrece crear, editar ni eliminar celdas', () => {
+    http.expectOne(url).flush(respuesta);
+    fixture.detectChanges();
+    const botones = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).map((b) => b.textContent?.trim());
+    expect(botones).toEqual(['Actualizar listado']);
+    expect(texto()).not.toMatch(/Crear celda|Editar|Eliminar|Gestionar/);
+  });
 });

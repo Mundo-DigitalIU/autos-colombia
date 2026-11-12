@@ -8,6 +8,7 @@ import {
   EntradaCrear,
   Estancia,
   EstadoVehiculo,
+  FiltrosCeldas,
   FiltrosHistorial,
   HistorialPagina,
   SalidaCrear,
@@ -55,9 +56,15 @@ export class EstanciasService {
       .get<HistorialPagina>(`${this.base}/historial`, { params })
       .pipe(timeout(15000));
   }
-  celdasEstado(offset = 0, limit = 100) {
+  celdasEstado(offset = 0, limit = 100, filtros: FiltrosCeldas = {}) {
+    let params = new HttpParams();
+    const q = filtros.q?.trim();
+    if (q) params = params.set('q', q);
+    if (filtros.tipo) params = params.set('tipo', filtros.tipo);
+    if (filtros.estado) params = params.set('estado', filtros.estado);
+    params = params.set('offset', offset).set('limit', limit);
     return this.http
-      .get<CeldasEstadoPagina>(`${this.base}/celdas`, { params: { offset, limit } })
+      .get<CeldasEstadoPagina>(`${this.base}/celdas`, { params })
       .pipe(timeout(15000));
   }
   celdas(): Observable<Celda[]> {
