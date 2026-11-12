@@ -7,6 +7,8 @@ from app.routers.vehiculos import router as vehiculos_router
 from app.routers.cuentas import router as cuentas_router
 from app.services.auth import AuthError
 from app.services.cuenta import CuentaError
+from app.routers.clientes import router as clientes_router
+from app.services.cliente import ClienteError
 from app.services.vehiculo import VehiculoError
 from app.routers.celdas import router as celdas_router
 from app.services.celda import CeldaError
@@ -23,6 +25,7 @@ app.include_router(celdas_router, dependencies=[CualquierRol])
 app.include_router(operadores_router, dependencies=[SoloAdministrador])
 app.include_router(estancias_router, dependencies=[CualquierRol])
 app.include_router(cuentas_router, dependencies=[SoloAdministrador])
+app.include_router(clientes_router, dependencies=[CualquierRol])
 
 
 @app.exception_handler(VehiculoError)
@@ -31,7 +34,8 @@ app.include_router(cuentas_router, dependencies=[SoloAdministrador])
 @app.exception_handler(EstanciaError)
 @app.exception_handler(AuthError)
 @app.exception_handler(CuentaError)
-async def entity_error_handler(request, error: VehiculoError | CeldaError | OperadorError | EstanciaError | AuthError | CuentaError) -> JSONResponse:
+@app.exception_handler(ClienteError)
+async def entity_error_handler(request, error: VehiculoError | CeldaError | OperadorError | EstanciaError | AuthError | CuentaError | ClienteError) -> JSONResponse:
     return JSONResponse(status_code=error.status_code, content={"detail": error.detail})
 
 

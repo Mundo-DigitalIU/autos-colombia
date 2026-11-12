@@ -7,13 +7,13 @@ from sqlalchemy.orm import Session
 
 from app.models import Operador, Sesion, Usuario
 from app.schemas.auth import LoginCrear, LoginRespuesta
+from app.services.comun import MENSAJE_BASE, nueva_transaccion
 from app.security import hash_de_relleno, hash_token, nuevo_token, verificar_clave
 
 DURACION_SESION = timedelta(hours=8)
 MENSAJE_LOGIN = "Usuario o contraseña incorrectos."
 MENSAJE_SESION = "Tu sesión terminó. Inicia sesión otra vez."
 MENSAJE_PERMISO = "No tienes permiso para entrar aquí."
-MENSAJE_BASE = "No se pudo completar la operación con la base de datos."
 
 
 class AuthError(Exception):
@@ -33,17 +33,10 @@ class SesionActual:
     nombre: str
 
 
-def _transaccion(session: Session):
-    """Abre una transacción nueva; si una consulta anterior dejó una abierta, la cierra antes."""
-    if session.in_transaction():
-        session.commit()
-    return session.begin()
-
-
 def iniciar_sesion(session: Session, data: LoginCrear) -> LoginRespuesta:
     nombre_usuario = data.usuario.strip().lower()
     try:
-        with _transaccion(session):
+        with nueva_transaccion(session):
             fila = session.execute(
                 select(Usuario, Operador.nombre).join(Operador, Operador.id == Usuario.operador_id)
                 .where(Usuario.nombre_usuario == nombre_usuario)
@@ -68,7 +61,7 @@ def sesion_por_token(session: Session, token: str | None) -> SesionActual:
     if not token:
         raise AuthError(401, MENSAJE_SESION)
     try:
-        with _transaccion(session):
+        with nueva_transaccion(session):
             fila = session.execute(
                 select(Sesion, Usuario, Operador.nombre)
                 .join(Usuario, Usuario.id == Sesion.usuario_id)
@@ -89,7 +82,7 @@ def sesion_por_token(session: Session, token: str | None) -> SesionActual:
 
 def cerrar_sesion(session: Session, sesion_id: int) -> None:
     try:
-        with _transaccion(session):
+        with nueva_transaccion(session):
             sesion = session.get(Sesion, sesion_id)
             if sesion is not None and sesion.revocada is None:
                 sesion.revocada = datetime.now(timezone.utc)

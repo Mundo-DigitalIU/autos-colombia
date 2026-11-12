@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.models import Operador, Usuario
 from app.schemas.cuenta import CuentaCrear, CuentaRespuesta, CuentasPagina
 from app.security import hashear_clave
-from app.services.auth import MENSAJE_BASE, SesionActual
+from app.services.auth import SesionActual
+from app.services.comun import MENSAJE_BASE, contiene, nueva_transaccion
 
 
 class CuentaError(Exception):
@@ -14,27 +15,16 @@ class CuentaError(Exception):
         self.detail = detail
 
 
-def escapar_like(texto: str) -> str:
-    """Evita que % y _ escritos por el usuario actúen como comodines."""
-    return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
-
 def _respuesta(usuario: Usuario, operador: Operador) -> CuentaRespuesta:
     return CuentaRespuesta(id=usuario.id, usuario=usuario.nombre_usuario, rol=usuario.rol,
                            nombre=operador.nombre, telefono=operador.telefono, operador_id=operador.id)
-
-
-def _transaccion_nueva(session: Session):
-    if session.in_transaction():
-        session.commit()
-    return session.begin()
 
 
 def crear_cuenta(session: Session, data: CuentaCrear) -> CuentaRespuesta:
     clave_hash = hashear_clave(data.contrasena)
     try:
         # Una sola transacción: si el usuario ya existe no queda un operador huérfano.
-        with _transaccion_nueva(session):
+        with nueva_transaccion(session):
             operador = Operador(nombre=data.nombre, telefono=data.telefono)
             session.add(operador)
             session.flush()
@@ -60,11 +50,9 @@ def listar_cuentas(session: Session, q: str | None, offset: int, limit: int) -> 
     filtros = []
     texto = (q or "").strip()
     if texto:
-        patron = f"%{escapar_like(texto)}%"
-        filtros.append(or_(Operador.nombre.ilike(patron, escape="\\"),
-                           Usuario.nombre_usuario.ilike(patron, escape="\\")))
+        filtros.append(or_(contiene(Operador.nombre, texto), contiene(Usuario.nombre_usuario, texto)))
     try:
-        with _transaccion_nueva(session):
+        with nueva_transaccion(session):
             base = select(Usuario, Operador).join(Operador, Operador.id == Usuario.operador_id).where(*filtros)
             total = session.scalar(select(func.count()).select_from(base.subquery()))
             filas = session.execute(base.order_by(Usuario.id).offset(offset).limit(limit)).all()
@@ -78,7 +66,7 @@ def listar_cuentas(session: Session, q: str | None, offset: int, limit: int) -> 
 def eliminar_cuenta(session: Session, cuenta_id: int, actual: SesionActual) -> None:
     """Borra solo el usuario (sus sesiones caen en cascada); el operador queda para el historial."""
     try:
-        with _transaccion_nueva(session):
+        with nueva_transaccion(session):
             usuario = session.get(Usuario, cuenta_id)
             if usuario is None:
                 raise CuentaError(404, "Cuenta no encontrada.")
