@@ -187,7 +187,7 @@ DDL PostgreSQL, pero no crean tablas ni prueban inserciones reales en la base lo
 Ejecuta este bloque únicamente cuando decidas aplicar la migración:
 
 ```powershell
-Set-Location -LiteralPath 'C:\Users\user\Documents\IU DIGITAL\Clase Ingeniería de Software\AutosColombia\backend'
+Set-Location -LiteralPath 'C:\Users\Jefferson\Documents\Universidad 2026\Ing Software\Proyecto Profesor\AutosColombia\backend
 .\.venv\Scripts\python.exe .\check_db.py
 if ($LASTEXITCODE -ne 0) { throw 'La conexión no está disponible; no aplicar migraciones.' }
 .\.venv\Scripts\python.exe -m alembic -c .\alembic.ini upgrade head
