@@ -50,6 +50,9 @@ def test_entrada_con_celda_valida_el_tipo_del_vehiculo():
                     {"codigo": f"{token}-{sufijo}", "tipo": tipo},
                 )
 
+            # Las celdas anteriores a la migración 0003 pueden tener tipos sucios; la restricción
+            # nueva ya no deja crearlos, así que se retira dentro de esta transacción (se revierte).
+            connection.execute(text("ALTER TABLE celda DROP CONSTRAINT ck_celda_tipo_valido"))
             celda_otro_tipo = crear_celda("X", "AUTOMOVIL")
             celda_tipo_exacto = crear_celda("E", "MOTO")
             celda_tipo_sucio = crear_celda("S", "  moto ")

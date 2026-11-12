@@ -57,7 +57,7 @@ def test_celdas_muestra_ocupada_o_disponible():
             ]
             celdas = [
                 connection.scalar(
-                    text("INSERT INTO celda(codigo, tipo) VALUES (:codigo, 'Libre') RETURNING id"),
+                    text("INSERT INTO celda(codigo, tipo) VALUES (:codigo, 'MOTO') RETURNING id"),
                     {"codigo": f"{token}-{n}"},
                 )
                 for n in range(3)
@@ -99,7 +99,7 @@ def test_celdas_muestra_ocupada_o_disponible():
                         assert actual[f"{token}-1"] == "OCUPADA"
                         assert actual[f"{token}-2"] == "DISPONIBLE"
                         item = next(i for i in cuerpo["items"] if i["codigo"] == f"{token}-1")
-                        assert item["tipo"] == "Libre"
+                        assert item["tipo"] == "MOTO"
 
                         # Cuando el vehículo sale, su celda queda disponible.
                         connection.execute(

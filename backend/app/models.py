@@ -16,6 +16,28 @@ def required_text(value: str, attribute: str) -> str:
     return value.strip()
 
 
+class Cliente(Base):
+    __tablename__ = "cliente"
+    __table_args__ = (
+        UniqueConstraint("documento", name="uq_cliente_documento"),
+        CheckConstraint("nombre ~ '[^[:space:]]'", name="ck_cliente_nombre_no_vacio"),
+        CheckConstraint("telefono ~ '[^[:space:]]'", name="ck_cliente_telefono_no_vacio"),
+        CheckConstraint("documento ~ '[^[:space:]]'", name="ck_cliente_documento_no_vacio"),
+        CheckConstraint("documento = regexp_replace(documento, '^[[:space:]]+|[[:space:]]+$', '', 'g')", name="ck_cliente_documento_normalizado"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    nombre: Mapped[str] = mapped_column(Text, nullable=False)
+    documento: Mapped[str] = mapped_column(Text, nullable=False)
+    telefono: Mapped[str] = mapped_column(Text, nullable=False)
+
+    vehiculos: Mapped[list["Vehiculo"]] = relationship(back_populates="cliente", order_by="Vehiculo.id")
+
+    @validates("nombre", "documento", "telefono")
+    def validate_text(self, key: str, value: str) -> str:
+        return required_text(value, key)
+
+
 class Vehiculo(Base):
     __tablename__ = "vehiculo"
     __table_args__ = (
@@ -26,6 +48,7 @@ class Vehiculo(Base):
         CheckConstraint("marca ~ '[^[:space:]]'", name="ck_vehiculo_marca_no_vacia"),
         CheckConstraint("modelo BETWEEN 1 AND 9999", name="ck_vehiculo_modelo_anio"),
         CheckConstraint("tipo IN ('MOTO', 'AUTOMOVIL', 'CAMIONETA')", name="ck_vehiculo_tipo"),
+        Index("ix_vehiculo_cliente_id", "cliente_id"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -34,6 +57,11 @@ class Vehiculo(Base):
     modelo: Mapped[int] = mapped_column(Integer, nullable=False)
     marca: Mapped[str] = mapped_column(Text, nullable=False)
     tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    cliente_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("cliente.id", name="fk_vehiculo_cliente", ondelete="RESTRICT"), nullable=True
+    )
+
+    cliente: Mapped[Cliente | None] = relationship(back_populates="vehiculos")
 
     @validates("placa", "color", "marca", "tipo")
     def validate_text(self, key: str, value: str) -> str:
@@ -58,6 +86,8 @@ class Celda(Base):
         CheckConstraint("codigo ~ '[^[:space:]]'", name="ck_celda_codigo_no_vacio"),
         CheckConstraint("codigo = upper(regexp_replace(codigo, '^[[:space:]]+|[[:space:]]+$', '', 'g'))", name="ck_celda_codigo_normalizado"),
         CheckConstraint("tipo ~ '[^[:space:]]'", name="ck_celda_tipo_no_vacio"),
+        # La migración 0003 la crea NOT VALID: las filas anteriores ('Libre', etc.) no se revisan.
+        CheckConstraint("tipo IN ('MOTO', 'AUTOMOVIL', 'CAMIONETA')", name="ck_celda_tipo_valido"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -140,3 +170,54 @@ class Estancia(Base):
         self.salida = fecha_salida
         self.operador_salida = operador
         self.operador_salida_id = operador.id
+
+
+class Usuario(Base):
+    __tablename__ = "usuario"
+    __table_args__ = (
+        UniqueConstraint("nombre_usuario", name="uq_usuario_nombre_usuario"),
+        UniqueConstraint("operador_id", name="uq_usuario_operador"),
+        CheckConstraint("nombre_usuario ~ '[^[:space:]]'", name="ck_usuario_nombre_no_vacio"),
+        CheckConstraint("nombre_usuario = lower(regexp_replace(nombre_usuario, '^[[:space:]]+|[[:space:]]+$', '', 'g'))", name="ck_usuario_nombre_normalizado"),
+        CheckConstraint("clave_hash ~ '[^[:space:]]'", name="ck_usuario_clave_no_vacia"),
+        CheckConstraint("rol IN ('ADMINISTRADOR', 'OPERADOR')", name="ck_usuario_rol"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    nombre_usuario: Mapped[str] = mapped_column(Text, nullable=False)
+    clave_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    rol: Mapped[str] = mapped_column(Text, nullable=False)
+    operador_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("operador.id", name="fk_usuario_operador", ondelete="RESTRICT"), nullable=False
+    )
+
+    operador: Mapped[Operador] = relationship()
+    sesiones: Mapped[list["Sesion"]] = relationship(back_populates="usuario", passive_deletes=True)
+
+    @validates("nombre_usuario", "clave_hash", "rol")
+    def validate_text(self, key: str, value: str) -> str:
+        value = required_text(value, key)
+        if key == "nombre_usuario":
+            return value.lower()
+        if key == "rol" and value not in {"ADMINISTRADOR", "OPERADOR"}:
+            raise ValueError("rol debe ser ADMINISTRADOR u OPERADOR.")
+        return value
+
+
+class Sesion(Base):
+    __tablename__ = "sesion"
+    __table_args__ = (
+        UniqueConstraint("token_hash", name="uq_sesion_token_hash"),
+        Index("ix_sesion_usuario_id", "usuario_id"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("usuario.id", name="fk_sesion_usuario", ondelete="CASCADE"), nullable=False
+    )
+    token_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    creada: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expira: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revocada: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    usuario: Mapped[Usuario] = relationship(back_populates="sesiones")

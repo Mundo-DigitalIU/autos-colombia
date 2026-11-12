@@ -45,7 +45,7 @@ def test_dentro_lista_solo_estancias_abiertas():
             vehiculos, celdas = [], []
             for n in range(2):
                 celdas.append(connection.scalar(
-                    text("INSERT INTO celda(codigo, tipo) VALUES (:codigo, 'Libre') RETURNING id"),
+                    text("INSERT INTO celda(codigo, tipo) VALUES (:codigo, 'MOTO') RETURNING id"),
                     {"codigo": f"{token}-{n}"},
                 ))
                 vehiculos.append(connection.scalar(

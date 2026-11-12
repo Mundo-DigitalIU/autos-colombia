@@ -75,7 +75,7 @@ def test_historial_filtra_por_placa_y_fechas():
             ]
             celdas = [
                 connection.scalar(
-                    text("INSERT INTO celda(codigo, tipo) VALUES (:codigo, 'Libre') RETURNING id"),
+                    text("INSERT INTO celda(codigo, tipo) VALUES (:codigo, 'MOTO') RETURNING id"),
                     {"codigo": f"{token}-C{n}"},
                 )
                 for n in range(3)
