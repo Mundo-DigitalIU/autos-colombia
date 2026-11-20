@@ -1,8 +1,9 @@
 """Modelos iniciales. Importar este módulo no crea tablas ni abre conexiones."""
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Identity, Index, Integer, Text, UniqueConstraint, func, text
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, Integer, Numeric, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, validates
 
 
@@ -221,3 +222,79 @@ class Sesion(Base):
     revocada: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     usuario: Mapped[Usuario] = relationship(back_populates="sesiones")
+
+
+class Tarifa(Base):
+    __tablename__ = "tarifa"
+    __table_args__ = (
+        UniqueConstraint("tipo_vehiculo", name="uq_tarifa_tipo_vehiculo"),
+        CheckConstraint("tipo_vehiculo IN ('MOTO', 'AUTOMOVIL', 'CAMIONETA')", name="ck_tarifa_tipo_vehiculo"),
+        CheckConstraint("valor_mensual > 0", name="ck_tarifa_valor_positivo"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    tipo_vehiculo: Mapped[str] = mapped_column(Text, nullable=False)
+    valor_mensual: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+    @validates("tipo_vehiculo")
+    def validate_tipo(self, key: str, value: str) -> str:
+        value = required_text(value, key)
+        if value not in {"MOTO", "AUTOMOVIL", "CAMIONETA"}:
+            raise ValueError("tipo_vehiculo debe ser MOTO, AUTOMOVIL o CAMIONETA.")
+        return value
+
+
+class Pago(Base):
+    __tablename__ = "pago"
+    __table_args__ = (
+        CheckConstraint("valor > 0", name="ck_pago_valor_positivo"),
+        CheckConstraint("medio_pago IN ('EFECTIVO', 'TRANSFERENCIA', 'TARJETA')", name="ck_pago_medio_pago"),
+        CheckConstraint("estado IN ('REGISTRADO', 'ANULADO')", name="ck_pago_estado"),
+        CheckConstraint("vigencia_hasta = vigencia_desde + 30", name="ck_pago_vigencia_30_dias"),
+        CheckConstraint(
+            "(estado = 'ANULADO' AND anulado_en IS NOT NULL AND anulado_por_operador_id IS NOT NULL "
+            "AND motivo_anulacion IS NOT NULL) "
+            "OR (estado = 'REGISTRADO' AND anulado_en IS NULL AND anulado_por_operador_id IS NULL "
+            "AND motivo_anulacion IS NULL)",
+            name="ck_pago_anulacion_coherente",
+        ),
+        Index("uq_pago_vehiculo_vigencia_registrado", "vehiculo_id", "vigencia_desde", unique=True,
+              postgresql_where=text("estado = 'REGISTRADO'")),
+        Index("ix_pago_vehiculo_id", "vehiculo_id"),
+        Index("ix_pago_cliente_id", "cliente_id"),
+        Index("ix_pago_fecha_pago", "fecha_pago"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    vehiculo_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("vehiculo.id", name="fk_pago_vehiculo", ondelete="RESTRICT"), nullable=False
+    )
+    cliente_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("cliente.id", name="fk_pago_cliente", ondelete="RESTRICT"), nullable=False
+    )
+    valor: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    medio_pago: Mapped[str] = mapped_column(Text, nullable=False)
+    fecha_pago: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    vigencia_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigencia_hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    operador_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("operador.id", name="fk_pago_operador", ondelete="RESTRICT"), nullable=False
+    )
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="REGISTRADO")
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulado_por_operador_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("operador.id", name="fk_pago_anulado_por_operador", ondelete="RESTRICT"), nullable=True
+    )
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    vehiculo: Mapped[Vehiculo] = relationship()
+    cliente: Mapped[Cliente] = relationship()
+    operador: Mapped[Operador] = relationship(foreign_keys=[operador_id])
+    anulado_por_operador: Mapped[Operador | None] = relationship(foreign_keys=[anulado_por_operador_id])
+
+    @validates("medio_pago")
+    def validate_medio_pago(self, key: str, value: str) -> str:
+        value = required_text(value, key)
+        if value not in {"EFECTIVO", "TRANSFERENCIA", "TARJETA"}:
+            raise ValueError("medio_pago debe ser EFECTIVO, TRANSFERENCIA o TARJETA.")
+        return value

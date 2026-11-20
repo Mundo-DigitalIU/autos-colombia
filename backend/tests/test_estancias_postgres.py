@@ -22,7 +22,7 @@ def datos():
     engine = get_engine()
     with engine.connect() as c:
         assert c.scalar(text('SELECT current_database()')) == 'autos_colombia'
-        assert c.scalar(text('SELECT version_num FROM alembic_version')) == '0003'
+        assert c.scalar(text('SELECT version_num FROM alembic_version')) == '0004'
     token = 'TEST-EST-' + uuid4().hex.upper()
     with Session(engine) as s, s.begin():
         vehicles = [Vehiculo(placa=f'{token}-{n}', color='Prueba', modelo=2026, marca='Prueba', tipo='MOTO') for n in range(2)]

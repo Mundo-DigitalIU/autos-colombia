@@ -57,7 +57,7 @@ def test_restricciones_en_postgres():
         transaction = connection.begin()
         try:
             assert connection.scalar(text("SELECT current_database()")) == "autos_colombia"
-            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0003"
+            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004"
             token = uuid4().hex[:10]
             operador = connection.scalar(text(
                 "INSERT INTO operador(nombre, telefono) VALUES (:n, '1') RETURNING id"), {"n": token})
