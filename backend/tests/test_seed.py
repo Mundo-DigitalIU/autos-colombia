@@ -104,3 +104,87 @@ def test_una_clave_del_entorno_demasiado_corta_se_rechaza_sin_mostrarla():
             with pytest.raises(seed.ClaveInvalida) as error:
                 seed.cargar(session, {"SEED_ADMIN_CLAVE": corta})
             assert corta not in str(error.value) and "SEED_ADMIN_CLAVE" in str(error.value)
+
+
+def test_tarifas_y_pagos_de_ejemplo_declarados_al_inicio():
+    assert seed.TARIFAS == {"MOTO": 100000, "AUTOMOVIL": 250000, "CAMIONETA": 250000}
+    assert seed.DIAS_PAGOS_EJEMPLO == (10, 45)
+
+
+def _contar(connection, tabla: str) -> int:
+    return connection.scalar(text(f"SELECT count(*) FROM {tabla}"))
+
+
+def _estado(client, placa: str) -> str:
+    (item,) = client.get("/pagos/estado", params={"q": placa}).json()["items"]
+    return item["estado"]
+
+
+@solo_postgres
+def test_seed_carga_tarifas_y_dos_pagos_sin_duplicar():
+    from datetime import timedelta
+    from app.services.pago import hoy_bogota
+
+    with entorno_bd() as (client, connection):
+        # Una tarifa que ya existe conserva su valor; las que faltan se crean.
+        connection.execute(text("DELETE FROM pago"))
+        connection.execute(text("DELETE FROM tarifa WHERE tipo_vehiculo <> 'MOTO'"))
+        connection.execute(text(
+            "INSERT INTO tarifa(tipo_vehiculo, valor_mensual) VALUES ('MOTO', 123456) "
+            "ON CONFLICT (tipo_vehiculo) DO UPDATE SET valor_mensual = 123456"))
+        with _sesion(connection) as session:
+            resumen, _ = seed.cargar(session)
+            session.flush()
+            assert resumen["tarifas"] == [2, 1] and resumen["pagos"] == [2, 0]
+            tarifas = dict(connection.execute(text("SELECT tipo_vehiculo, valor_mensual FROM tarifa")).all())
+            assert tarifas == {"MOTO": 123456, "AUTOMOVIL": 250000, "CAMIONETA": 250000}
+
+            pagos = connection.execute(text(
+                "SELECT p.cliente_id, p.vehiculo_id, p.valor, p.vigencia_desde, p.vigencia_hasta, p.estado, "
+                "o.nombre AS operador, v.placa, v.tipo FROM pago p "
+                "JOIN operador o ON o.id = p.operador_id JOIN vehiculo v ON v.id = p.vehiculo_id "
+                "ORDER BY p.vigencia_desde DESC")).all()
+            assert len(pagos) == 2 and pagos[0].cliente_id != pagos[1].cliente_id
+            assert all(p.operador == "Administrador" and p.estado == "REGISTRADO" for p in pagos)
+            assert all(p.vigencia_hasta == p.vigencia_desde + timedelta(days=30) for p in pagos)
+            assert all(p.valor == tarifas[p.tipo] for p in pagos)
+            reciente, antiguo = pagos
+            hoy = hoy_bogota()
+            assert reciente.vigencia_desde == hoy - timedelta(days=10)
+            assert antiguo.vigencia_desde == hoy - timedelta(days=45)
+            assert _estado(client, reciente.placa) == "AL_DIA"
+            assert _estado(client, antiguo.placa) == "VENCIDA"
+            otros = client.get("/pagos/estado", params={"estado": "SIN_PAGOS", "limit": 100}).json()["items"]
+            assert reciente.placa not in {i["placa"] for i in otros} and len(otros) >= 1
+
+            # Segunda ejecución seguida: no se duplica nada.
+            antes = (_contar(connection, "pago"), _contar(connection, "tarifa"), _contar(connection, "cliente"),
+                     _contar(connection, "vehiculo"))
+            resumen, _ = seed.cargar(session)
+            session.flush()
+            assert resumen["tarifas"] == [0, 3] and resumen["pagos"] == [0, 2]
+            assert antes == (_contar(connection, "pago"), _contar(connection, "tarifa"),
+                             _contar(connection, "cliente"), _contar(connection, "vehiculo")) == (2, 3, antes[2], antes[3])
+
+
+@solo_postgres
+def test_seed_crea_clientes_de_ejemplo_si_no_hay_vehiculos_suficientes(monkeypatch):
+    monkeypatch.setattr(seed, "VEHICULOS", [])
+    monkeypatch.setattr(seed, "CLIENTES", [])
+    with entorno_bd() as (_, connection):
+        connection.execute(text("DELETE FROM pago"))
+        existentes = connection.execute(text("SELECT id, nombre FROM cliente ORDER BY id")).all()
+        with _sesion(connection) as session:
+            seed.cargar(session)
+            session.flush()
+            clientes = connection.execute(text(
+                "SELECT c.documento, count(p.id) AS pagos FROM cliente c JOIN pago p ON p.cliente_id = c.id "
+                "GROUP BY c.documento ORDER BY c.documento")).all()
+            assert [tuple(c) for c in clientes] == [("1000000101", 1), ("1000000102", 1)]
+            assert connection.execute(text(
+                "SELECT id, nombre FROM cliente WHERE id <= :m ORDER BY id"),
+                {"m": existentes[-1].id if existentes else 0}).all() == existentes  # los existentes siguen igual
+            antes = (_contar(connection, "pago"), _contar(connection, "cliente"), _contar(connection, "vehiculo"))
+            seed.cargar(session)
+            session.flush()
+            assert antes == (_contar(connection, "pago"), _contar(connection, "cliente"), _contar(connection, "vehiculo"))
