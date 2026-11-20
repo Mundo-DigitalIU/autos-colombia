@@ -164,4 +164,25 @@ describe('Pagos registrados', () => {
     expect(raiz().querySelector('tbody')?.textContent).toContain('Anulado');
     expect(boton('Anular')).toBeUndefined();
   });
+
+  it('al pulsar Anular el diálogo se muestra en pantalla y el foco pasa al motivo', async () => {
+    // jsdom no calcula la posición de los elementos: se comprueba que se pida mostrarlo y enfocarlo.
+    // Sin esto, con la lista desplazada hacia abajo el diálogo se abría fuera de la vista.
+    const mostrar = vi.fn();
+    (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView = mostrar;
+    try {
+      crear('ADMINISTRADOR');
+      listar(pagina([pagoPrueba()]));
+      fixture.detectChanges();
+      boton('Anular')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const dialogo = raiz().querySelector('[role="alertdialog"]');
+      expect(mostrar).toHaveBeenCalledTimes(1);
+      expect(mostrar.mock.contexts[0]).toBe(dialogo);
+      expect(document.activeElement?.id).toBe('anular-motivo');
+    } finally {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
 });

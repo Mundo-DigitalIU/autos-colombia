@@ -1,4 +1,13 @@
-import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  afterNextRender,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Pago } from '../models/pago';
@@ -27,6 +36,16 @@ export class AnularPago {
   readonly actionError = signal('');
   readonly fecha = fechaCorta;
   readonly pesos = pesos;
+
+  constructor() {
+    // El diálogo se abre arriba del listado: si la persona había bajado hasta la fila, quedaba fuera
+    // de la pantalla y parecía que el botón Anular no hacía nada. Se muestra y se enfoca el motivo.
+    const raiz = inject(ElementRef).nativeElement as HTMLElement;
+    afterNextRender(() => {
+      raiz.querySelector('section')?.scrollIntoView?.({ block: 'center' });
+      raiz.querySelector<HTMLTextAreaElement>('#anular-motivo')?.focus({ preventScroll: true });
+    });
+  }
 
   anular(): void {
     if (this.saving()) return;
