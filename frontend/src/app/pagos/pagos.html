@@ -1,0 +1,30 @@
+<section class="management" aria-labelledby="pagos-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">MENSUALIDADES</span>
+      <h1 id="pagos-title">Pagos</h1>
+      <p>Consulta el estado de la mensualidad de cada vehículo y los pagos registrados.</p>
+    </div>
+  </header>
+  <div role="tablist" aria-label="Pagos">
+    <button
+      type="button"
+      role="tab"
+      id="tab-mensualidades"
+      [attr.aria-selected]="pestana() === 'mensualidades'"
+      (click)="pestana.set('mensualidades')"
+    >
+      Mensualidades
+    </button>
+    <button
+      type="button"
+      role="tab"
+      id="tab-registrados"
+      [attr.aria-selected]="pestana() === 'registrados'"
+      (click)="pestana.set('registrados')"
+    >
+      Pagos registrados
+    </button>
+  </div>
+  <div role="tabpanel" [attr.aria-labelledby]="'tab-' + pestana()"></div>
+</section>

@@ -24,6 +24,7 @@ const ENLACES: Enlace[] = [
   { ruta: '/historial', texto: 'Historial' },
   { ruta: '/estado-celdas', texto: 'Celdas' },
   { ruta: '/panel/clientes', texto: 'Clientes' },
+  { ruta: '/panel/pagos', texto: 'Pagos' },
   { ruta: '/panel/cuentas', texto: 'Cuentas', administrador: true },
   { ruta: '/panel/celdas', texto: 'Gestionar celdas', administrador: true },
 ];

@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { administradorGuard, sesionGuard, visitanteGuard } from './auth/auth.guards';
 
 // Las rutas evitan los prefijos del proxy de desarrollo (/estancias, /celdas, /vehiculos,
-// /operadores, /auth, /cuentas, /clientes y /health): por eso las pantallas viven en /panel.
+// /operadores, /auth, /cuentas, /clientes, /pagos y /health): por eso las pantallas viven en /panel.
 export const routes: Routes = [
   {
     path: 'login',
@@ -61,6 +61,21 @@ export const routes: Routes = [
         path: 'panel/clientes',
         title: 'Clientes | Autos Colombia',
         loadComponent: () => import('./clientes/clientes').then((m) => m.Clientes),
+      },
+      {
+        path: 'panel/pagos',
+        title: 'Pagos | Autos Colombia',
+        loadComponent: () => import('./pagos/pagos').then((m) => m.Pagos),
+      },
+      {
+        path: 'panel/pagos/registrar',
+        title: 'Registrar pago | Autos Colombia',
+        loadComponent: () => import('./pagos/registrar-pago').then((m) => m.RegistrarPago),
+      },
+      {
+        path: 'panel/pagos/comprobante/:id',
+        title: 'Comprobante de pago | Autos Colombia',
+        loadComponent: () => import('./pagos/comprobante').then((m) => m.Comprobante),
       },
       {
         path: 'panel/celdas',

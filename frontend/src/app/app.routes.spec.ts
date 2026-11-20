@@ -37,6 +37,9 @@ describe('Rutas', () => {
       'historial',
       'estado-celdas',
       'panel/clientes',
+      'panel/pagos',
+      'panel/pagos/registrar',
+      'panel/pagos/comprobante/:id',
       'panel/cuentas',
       'panel/celdas',
     ]) {
@@ -50,6 +53,7 @@ describe('Rutas', () => {
       'auth',
       'cuentas',
       'clientes',
+      'pagos',
       'health',
     ];
     for (const ruta of rutas.filter((r): r is string => !!r)) {
@@ -58,7 +62,15 @@ describe('Rutas', () => {
   });
 
   it('sin sesión, cualquier pantalla lleva a /login', async () => {
-    for (const url of ['/entrada', '/panel/clientes', '/panel/cuentas', '/estado-celdas']) {
+    for (const url of [
+      '/entrada',
+      '/panel/clientes',
+      '/panel/cuentas',
+      '/estado-celdas',
+      '/panel/pagos',
+      '/panel/pagos/registrar',
+      '/panel/pagos/comprobante/5',
+    ]) {
       TestBed.resetTestingModule();
       expect((await navegar(url, null)).url).toBe('/login');
     }
@@ -97,6 +109,22 @@ describe('Rutas', () => {
     for (const url of ['/panel/cuentas', '/panel/celdas']) {
       TestBed.resetTestingModule();
       expect((await navegar(url, 'ADMINISTRADOR')).url).toBe(url);
+    }
+  });
+
+  it('Operador y Administrador entran a las pantallas de pagos', async () => {
+    const pantallas = [
+      ['/panel/pagos', 'Pagos'],
+      ['/panel/pagos/registrar', 'Registrar pago'],
+      ['/panel/pagos/comprobante/5', 'Comprobante de pago'],
+    ];
+    for (const rol of ['OPERADOR', 'ADMINISTRADOR'] as const) {
+      for (const [url, titulo] of pantallas) {
+        TestBed.resetTestingModule();
+        const destino = await navegar(url, rol);
+        expect(destino.url).toBe(url);
+        expect(destino.texto).toContain(titulo);
+      }
     }
   });
 });

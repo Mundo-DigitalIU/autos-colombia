@@ -35,7 +35,7 @@ describe('Navegación', () => {
     expect(raiz().textContent).not.toContain('Cerrar sesión');
   });
 
-  it('el operador ve Entrada, Salida, Dentro, Historial, Celdas y Clientes, con su nombre y rol', async () => {
+  it('el operador ve Entrada, Salida, Dentro, Historial, Celdas, Clientes y Pagos, con su nombre y rol', async () => {
     await crear('OPERADOR');
     expect(enlaces()).toEqual([
       ['Entrada', '/entrada'],
@@ -44,13 +44,14 @@ describe('Navegación', () => {
       ['Historial', '/historial'],
       ['Celdas', '/estado-celdas'],
       ['Clientes', '/panel/clientes'],
+      ['Pagos', '/panel/pagos'],
     ]);
     expect(raiz().textContent).toContain('Ana Pérez');
     expect(raiz().textContent).toContain('Operador');
     expect(raiz().textContent).toContain('Cerrar sesión');
   });
 
-  it('el administrador ve además Cuentas y Gestionar celdas', async () => {
+  it('el administrador ve Pagos y además Cuentas y Gestionar celdas', async () => {
     await crear('ADMINISTRADOR');
     expect(enlaces()).toEqual([
       ['Entrada', '/entrada'],
@@ -59,6 +60,7 @@ describe('Navegación', () => {
       ['Historial', '/historial'],
       ['Celdas', '/estado-celdas'],
       ['Clientes', '/panel/clientes'],
+      ['Pagos', '/panel/pagos'],
       ['Cuentas', '/panel/cuentas'],
       ['Gestionar celdas', '/panel/celdas'],
     ]);
