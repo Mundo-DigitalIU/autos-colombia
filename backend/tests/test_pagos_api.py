@@ -350,7 +350,7 @@ def test_listado_filtros_orden_y_paginacion(fijar_fecha):
         assert [p["id"] for p in listar(q=b["documento"])["items"]] == [pago_b["id"]]
         assert [p["id"] for p in listar(q=a["nombre"])["items"]] == [pago_a["id"]]
         assert [p["id"] for p in listar(q="%")["items"]] == []  # el comodín se escapa
-        assert [p["id"] for p in listar(estado="ANULADO", desde="2026-09-01")["items"]] == [pago_b["id"]]
+        assert [p["id"] for p in listar(estado="ANULADO", desde="2026-09-01", hasta="2026-09-30")["items"]] == [pago_b["id"]]
         assert [p["id"] for p in listar(estado="REGISTRADO", q=b["placa"])["items"]] == []
         # La fecha de pago se compara en hora de Bogotá, con el día completo incluido.
         assert [p["id"] for p in listar(desde="2026-09-05", hasta="2026-09-05")["items"]] == [pago_b["id"]]

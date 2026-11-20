@@ -23,11 +23,16 @@ instalar y ejecutar los proyectos en Windows está en `README.md`.
   `/auth/login` y `/health`.
 - `backend/app/{schemas,services,routers}/{cuenta,cliente}.py`: cuentas (solo ADMINISTRADOR) y
   clientes con sus vehículos. `app/services/comun.py` reúne utilidades de los servicios.
+- `backend/app/{schemas,services,routers}/pago.py`: pagos de mensualidad (`/pagos`). El servicio calcula la vigencia de 30 días
+  desde la fecha de corte en hora de Bogotá (`ahora_utc` y `hoy_bogota` se sustituyen en las pruebas), bloquea la fila del
+  vehículo con `with_for_update` y solo anula el último pago vigente. El valor sale de la tabla `tarifa`.
+- `frontend/src/app/pagos/`: Pagos (pestañas Mensualidades y Pagos registrados), Registrar pago, Comprobante y el diálogo de
+  anulación; `services/pagos.service.ts`, `models/pago.ts` y `shared/formato.ts` (fechas dd/mm/aaaa, pesos y hora de Bogotá).
 - `backend/seed.py`: datos de prueba idempotentes; las contraseñas de `admin` y `operador` salen
   de `SEED_ADMIN_CLAVE` y `SEED_OPERADOR_CLAVE` o se generan una sola vez. No fijar contraseñas en el código.
 - `backend/tests/conftest.py` y `tests/utiles_bd.py`: sesión simulada de ADMINISTRADOR para las pruebas
   (un módulo que necesita la autenticación real define `SIN_SESION_FALSA = True`) y ayudas de integración.
-- `backend/migrations/`: revisiones Alembic (la `0003` añade usuarios, sesiones y clientes); `backend/alembic.ini` reutiliza la configuración privada.
+- `backend/migrations/`: revisiones Alembic (la `0003` añade usuarios, sesiones y clientes; la `0004` añade tarifa y pago); `backend/alembic.ini` reutiliza la configuración privada.
 - `backend/.env.example`: plantilla pública; conservar cualquier `.env` existente y privado.
 - `backend/requirements.txt`: dependencias de ejecución y pruebas con versiones
   exactas, incluidas las transitivas.
@@ -136,7 +141,7 @@ La prueba actual comprueba `/health` sin iniciar un servidor externo. Starlette
 puede emitir un aviso de deprecación sobre `httpx`; distinguirlo de un fallo.
 
 Las pruebas de integración de vehículos se habilitan con `RUN_POSTGRES_TESTS=1`
-y requieren `autos_colombia` con la revisión `0003`. Usan rollback exterior y
+y requieren `autos_colombia` con la revisión `0004`. Usan rollback exterior y
 savepoints: no crear tablas ni alterar migraciones para probar. Los valores de
 las secuencias pueden avanzar. Ver `backend/README.md` para comandos completos.
 
