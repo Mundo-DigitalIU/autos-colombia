@@ -280,7 +280,7 @@ Sin sesión, cualquier pantalla lleva a `/login`. Con sesión, el menú superior
 | `/panel/clientes` | Clientes: buscar y registrar con uno o varios vehículos; editar y eliminar solo el administrador | Ambos roles |
 | `/panel/pagos` | Pagos, con dos pestañas: **Mensualidades** (estado de cada vehículo, buscador, filtro por estado y botón Registrar pago) y **Pagos registrados** (lista con filtros por texto, estado y fechas, Ver comprobante, y Anular solo para el administrador) | Ambos roles (anular: administrador) |
 | `/panel/pagos/registrar` | Registrar pago: placa y medio de pago; muestra cliente, tipo, tarifa y la vigencia que quedaría (es una ayuda: la que vale es la del servidor). Acepta `?placa=` para abrir con la placa escrita | Ambos roles |
-| `/panel/pagos/comprobante/:id` | Comprobante de un pago, con la franja ANULADO, el motivo, quién y cuándo si fue anulado | Ambos roles |
+| `/panel/pagos/comprobante/:id` | Comprobante de un pago con su número de 6 dígitos (`000184`), la hora en formato de 12 horas y, si fue anulado, la franja ANULADO con el motivo, quién y cuándo | Ambos roles |
 | `/panel/cuentas` | Cuentas: lista, crear y eliminar | Administrador |
 | `/panel/celdas` | Gestionar celdas: buscar, filtrar por tipo y estado, crear, editar y eliminar | Administrador |
 | `/sin-permiso` | Aviso que ve un operador que entra a una ruta de administrador | Con sesión |
@@ -313,7 +313,7 @@ npm.cmd test -- --watch=false
 npm.cmd run build
 ```
 
-En la última ejecución completa pasaron las 258 pruebas del backend (203 sin PostgreSQL; las 55 restantes son de integración) y las 195 del frontend, y la compilación del frontend (`npm.cmd run build`) terminó sin errores ni avisos.
+En la última ejecución completa pasaron las 258 pruebas del backend (203 sin PostgreSQL; las 55 restantes son de integración) y las 198 del frontend, y la compilación del frontend (`npm.cmd run build`) terminó sin errores ni avisos.
 
 ## Estructura del repositorio
 

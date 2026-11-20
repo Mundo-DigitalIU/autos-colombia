@@ -4,7 +4,7 @@
   aria-labelledby="anular-pago-title"
   aria-describedby="anular-pago-resumen"
 >
-  <h2 id="anular-pago-title">Anular el pago {{ pago().id }}</h2>
+  <h2 id="anular-pago-title">Anular el pago {{ numero(pago().id) }}</h2>
   <dl class="resumen" id="anular-pago-resumen">
     <dt>Placa</dt>
     <dd>{{ pago().placa }}</dd>

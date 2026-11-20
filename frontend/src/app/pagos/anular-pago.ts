@@ -13,7 +13,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Pago } from '../models/pago';
 import { PagosService } from '../services/pagos.service';
 import { mensajeApi } from '../shared/errores';
-import { fechaCorta, pesos } from '../shared/formato';
+import { fechaCorta, numeroPago, pesos } from '../shared/formato';
 
 export const MENSAJE_MOTIVO = 'Escribe el motivo de la anulación.';
 
@@ -36,6 +36,7 @@ export class AnularPago {
   readonly actionError = signal('');
   readonly fecha = fechaCorta;
   readonly pesos = pesos;
+  readonly numero = numeroPago;
 
   constructor() {
     // El diálogo se abre arriba del listado: si la persona había bajado hasta la fila, quedaba fuera

@@ -372,18 +372,6 @@ thead th {
   margin: 0;
   font-weight: 600;
 }
-.franja-anulado {
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: #f8e3df;
-  color: #8f3a2c;
-}
-.franja-anulado strong {
-  letter-spacing: 0.08em;
-}
-.comprobante {
-  max-width: 640px;
-}
 .valor {
   white-space: nowrap;
 }

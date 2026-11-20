@@ -90,7 +90,7 @@
                 <a
                   class="button-link"
                   [routerLink]="['/panel/pagos/comprobante', pago.id]"
-                  [attr.aria-label]="'Ver comprobante del pago ' + pago.id"
+                  [attr.aria-label]="'Ver comprobante del pago ' + numero(pago.id)"
                   >Ver comprobante</a
                 >
                 @if (puedeAnular(pago)) {
@@ -98,7 +98,7 @@
                     type="button"
                     class="delete-link"
                     (click)="pedirAnulacion(pago)"
-                    [attr.aria-label]="'Anular el pago ' + pago.id"
+                    [attr.aria-label]="'Anular el pago ' + numero(pago.id)"
                   >
                     Anular
                   </button>

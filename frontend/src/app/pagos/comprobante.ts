@@ -1,16 +1,28 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Pago } from '../models/pago';
+import { MedioPago, Pago } from '../models/pago';
+import { TipoVehiculo } from '../models/vehiculo';
 import { PagosService } from '../services/pagos.service';
 import { mensajeApi } from '../shared/errores';
-import { fechaCorta, fechaHoraCorta, pesos } from '../shared/formato';
+import { fechaCorta, fechaHora12, numeroPago, pesos } from '../shared/formato';
+
+const TIPOS: Record<TipoVehiculo, string> = {
+  MOTO: 'Moto',
+  AUTOMOVIL: 'Automóvil',
+  CAMIONETA: 'Camioneta',
+};
+const MEDIOS: Record<MedioPago, string> = {
+  EFECTIVO: 'Efectivo',
+  TRANSFERENCIA: 'Transferencia',
+  TARJETA: 'Tarjeta',
+};
 
 @Component({
   selector: 'app-comprobante',
   imports: [RouterLink],
   templateUrl: './comprobante.html',
-  styleUrl: '../shared/gestion.css',
+  styleUrls: ['../shared/gestion.css', './comprobante.css'],
 })
 export class Comprobante {
   private readonly api = inject(PagosService);
@@ -21,8 +33,12 @@ export class Comprobante {
   /** Aviso que deja la pantalla anterior, por ejemplo "Pago registrado." */
   readonly aviso = signal('');
   readonly fecha = fechaCorta;
-  readonly fechaHora = fechaHoraCorta;
+  /** Solo el comprobante muestra la hora en 12 horas. */
+  readonly fechaHora = fechaHora12;
+  readonly numero = numeroPago;
   readonly pesos = pesos;
+  readonly tipos = TIPOS;
+  readonly medios = MEDIOS;
 
   constructor() {
     const aviso = inject(Router).getCurrentNavigation()?.extras.state?.['aviso'];

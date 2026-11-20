@@ -30,7 +30,22 @@ export function fechaHoraCorta(instante: string | null | undefined): string {
   return `${p['day']}/${p['month']}/${p['year']} ${p['hour']}:${p['minute']}`;
 }
 
-/** 250000 → "$250.000" (separador de miles con punto, sin decimales). */
+/** Instante con zona horaria → "01/09/2026 · 12:00 p. m." (12 horas, hora de Bogotá). Solo lo usa el comprobante. */
+export function fechaHora12(instante: string | null | undefined): string {
+  const corta = fechaHoraCorta(instante);
+  if (!corta) return '';
+  const [dia, hora] = corta.split(' ');
+  const [h, minutos] = hora.split(':');
+  const hora12 = String(Number(h) % 12 || 12).padStart(2, '0');
+  return `${dia} · ${hora12}:${minutos} ${Number(h) < 12 ? 'a. m.' : 'p. m.'}`;
+}
+
+/** Número del comprobante con ceros a la izquierda: 184 → "000184". */
+export function numeroPago(id: number): string {
+  return String(id).padStart(6, '0');
+}
+
+/** 250000 → "$250.000"(separador de miles con punto, sin decimales). */
 export function pesos(valor: number | null | undefined): string {
   if (valor === null || valor === undefined || !Number.isFinite(valor)) return '';
   const entero = Math.round(Math.abs(valor)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');

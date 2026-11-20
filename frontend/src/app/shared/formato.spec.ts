@@ -1,4 +1,12 @@
-import { fechaCorta, fechaHoraCorta, hoyBogota, pesos, sumarDias } from './formato';
+import {
+  fechaCorta,
+  fechaHora12,
+  fechaHoraCorta,
+  hoyBogota,
+  numeroPago,
+  pesos,
+  sumarDias,
+} from './formato';
 
 describe('Formato de pagos', () => {
   it('fechaCorta muestra dd/mm/aaaa sin cambiar el día', () => {
@@ -14,6 +22,21 @@ describe('Formato de pagos', () => {
     expect(fechaHoraCorta('2026-09-02T02:05:00+00:00')).toBe('01/09/2026 21:05');
     expect(fechaHoraCorta(null)).toBe('');
     expect(fechaHoraCorta('no es fecha')).toBe('');
+  });
+
+  it('fechaHora12 muestra 12 horas con a. m. y p. m. en hora de Bogotá', () => {
+    expect(fechaHora12('2026-10-23T10:42:00-05:00')).toBe('23/10/2026 · 10:42 a. m.');
+    expect(fechaHora12('2026-09-01T12:00:00-05:00')).toBe('01/09/2026 · 12:00 p. m.');
+    expect(fechaHora12('2026-09-01T00:05:00-05:00')).toBe('01/09/2026 · 12:05 a. m.');
+    expect(fechaHora12('2026-09-01T15:30:00-05:00')).toBe('01/09/2026 · 03:30 p. m.');
+    expect(fechaHora12('2026-09-02T02:05:00+00:00')).toBe('01/09/2026 · 09:05 p. m.');
+    expect(fechaHora12(null)).toBe('');
+  });
+
+  it('numeroPago rellena con ceros a 6 dígitos', () => {
+    expect(numeroPago(184)).toBe('000184');
+    expect(numeroPago(7)).toBe('000007');
+    expect(numeroPago(1234567)).toBe('1234567');
   });
 
   it('pesos usa punto como separador de miles', () => {

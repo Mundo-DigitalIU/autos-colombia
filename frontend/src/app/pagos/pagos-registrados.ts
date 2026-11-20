@@ -6,7 +6,7 @@ import { EstadoPago, Pago } from '../models/pago';
 import { AuthService } from '../services/auth.service';
 import { PagosService } from '../services/pagos.service';
 import { mensajeApi } from '../shared/errores';
-import { fechaCorta, fechaHoraCorta, pesos } from '../shared/formato';
+import { fechaCorta, fechaHoraCorta, numeroPago, pesos } from '../shared/formato';
 import { AnularPago } from './anular-pago';
 
 export const MENSAJE_FECHAS = 'La fecha desde no puede ser posterior a la fecha hasta.';
@@ -45,6 +45,7 @@ export class PagosRegistrados {
   readonly fecha = fechaCorta;
   readonly fechaHora = fechaHoraCorta;
   readonly pesos = pesos;
+  readonly numero = numeroPago;
 
   constructor() {
     this.load(0);

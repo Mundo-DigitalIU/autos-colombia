@@ -37,14 +37,15 @@ describe('Comprobante', () => {
       const dt = Array.from(raiz().querySelectorAll('dt')).find((x) => x.textContent?.trim() === etiqueta)!;
       return dt.nextElementSibling?.textContent?.trim();
     };
-    expect(dato('Número')).toBe('7');
-    expect(dato('Fecha y hora del pago')).toBe('01/09/2026 12:00');
+    expect(dato('Número de pago')).toBe('000007');
+    expect(raiz().querySelector('.recibo-numero')?.textContent?.trim()).toBe('Pago 000007');
+    expect(dato('Fecha y hora')).toBe('01/09/2026 · 12:00 p. m.');
     expect(dato('Cliente')).toBe('Laura Gómez');
     expect(dato('Documento')).toBe('1000000001');
     expect(dato('Placa')).toBe('ABC123');
-    expect(dato('Tipo de vehículo')).toBe('AUTOMOVIL');
+    expect(dato('Tipo de vehículo')).toBe('Automóvil');
     expect(dato('Valor')).toBe('$250.000');
-    expect(dato('Medio de pago')).toBe('EFECTIVO');
+    expect(dato('Medio de pago')).toBe('Efectivo');
     expect(dato('Vigencia desde')).toBe('01/09/2026');
     expect(dato('Vigencia hasta')).toBe('01/10/2026');
     expect(dato('Registrado por')).toBe('Administrador');
@@ -60,7 +61,20 @@ describe('Comprobante', () => {
     expect(franja).toContain('ANULADO');
     expect(franja).toContain('Cobro duplicado');
     expect(franja).toContain('Administrador');
-    expect(franja).toContain('02/09/2026 09:30');
+    expect(franja).toContain('02/09/2026 · 09:30 a. m.');
+  });
+
+  it('muestra el encabezado, la nota de los 30 días y el medio y tipo con mayúscula inicial', () => {
+    crear('7');
+    http.expectOne('/pagos/7').flush(pagoPrueba({ tipo: 'MOTO', medio_pago: 'TARJETA' }));
+    fixture.detectChanges();
+    expect(texto()).toContain('GESTIÓN DE PAGOS');
+    expect(texto()).toContain('Detalle del pago de la mensualidad.');
+    expect(texto()).toContain('Autos Colombia');
+    expect(texto()).toContain('Comprobante de mensualidad');
+    expect(texto()).toContain('La mensualidad dura 30 días y se cuenta desde la fecha de corte del vehículo.');
+    expect(texto()).toContain('Moto');
+    expect(texto()).toContain('Tarjeta');
   });
 
   it('tiene el botón Volver a pagos', () => {

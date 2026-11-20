@@ -1,0 +1,96 @@
+.recibo {
+  max-width: 450px;
+  padding: 22px 22px 18px;
+  border: 1px solid #dcdfe8;
+  border-radius: 16px;
+  background: #fff;
+}
+.recibo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #dcdfe8;
+}
+.recibo-marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.recibo-marca div {
+  display: grid;
+  font-size: 13px;
+}
+.recibo-marca span:not(.recibo-logo) {
+  font-size: 11px;
+  color: #5a6480;
+}
+.recibo-logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #2c3e63;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.recibo-numero {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2c3e63;
+}
+.recibo-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+}
+.recibo-datos div {
+  padding: 12px 0;
+  border-bottom: 1px solid #dcdfe8;
+}
+.recibo-datos dt {
+  font-size: 11px;
+  color: #5a6480;
+}
+.recibo-datos dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2d4b;
+}
+.recibo-nota {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #e7eaf3;
+  font-size: 11px;
+  color: #5a6480;
+}
+.recibo-pie {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 450px;
+  margin-top: 18px;
+}
+.franja-anulado {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f8e3df;
+  color: #8f3a2c;
+}
+.franja-anulado strong {
+  letter-spacing: 0.08em;
+}
+.franja-anulado p {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+@media (max-width: 460px) {
+  .recibo-datos {
+    grid-template-columns: 1fr;
+  }
+}
