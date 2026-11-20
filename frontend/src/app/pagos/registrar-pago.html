@@ -3,6 +3,71 @@
     <div>
       <span class="eyebrow">MENSUALIDADES</span>
       <h1 id="registrar-pago-title">Registrar pago</h1>
+      <p>Escribe la placa del vehículo y el medio de pago. El valor lo pone la tarifa del tipo.</p>
     </div>
   </header>
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+  <section class="panel" aria-labelledby="pago-form-title">
+    <h2 id="pago-form-title">Datos del pago</h2>
+    <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <fieldset [disabled]="saving()">
+        <legend class="sr-only">Datos del pago</legend>
+        <div class="form-grid">
+          <div class="field">
+            <label for="pago-placa">Placa</label
+            ><input
+              id="pago-placa"
+              type="text"
+              formControlName="placa"
+              autocomplete="off"
+              [attr.aria-invalid]="!!errorDeCampo('placa')"
+              aria-describedby="pago-placa-error"
+            /><span class="field-error" id="pago-placa-error">{{ errorDeCampo('placa') }}</span>
+          </div>
+          <div class="field">
+            <label for="pago-medio">Medio de pago</label>
+            <select
+              id="pago-medio"
+              formControlName="medio_pago"
+              [attr.aria-invalid]="!!errorDeCampo('medio_pago')"
+              aria-describedby="pago-medio-error"
+            >
+              <option value="">Selecciona…</option>
+              @for (medio of medios; track medio) {
+                <option [value]="medio">{{ medio }}</option>
+              }
+            </select>
+            <span class="field-error" id="pago-medio-error">{{ errorDeCampo('medio_pago') }}</span>
+          </div>
+        </div>
+        @if (buscandoPlaca()) {
+          <p class="hint" role="status">Buscando el vehículo…</p>
+        }
+        @if (vehiculo(); as v) {
+          <dl class="resumen" aria-label="Resumen del pago">
+            <dt>Cliente</dt>
+            <dd>{{ v.cliente_nombre }}</dd>
+            <dt>Tipo</dt>
+            <dd>{{ v.tipo }}</dd>
+            <dt>Tarifa</dt>
+            <dd>{{ v.tarifa === null ? 'Sin tarifa' : pesos(v.tarifa) }}</dd>
+            @if (vigencia(); as vig) {
+              <dt>Vigencia</dt>
+              <dd>Vigente desde {{ fecha(vig.desde) }} hasta {{ fecha(vig.hasta) }}</dd>
+            }
+          </dl>
+          <p class="hint">La vigencia es una ayuda: la que vale es la que calcula el sistema al guardar.</p>
+        } @else if (sinVehiculo()) {
+          <p class="warning" role="status">No encontramos un vehículo con cliente para esa placa.</p>
+        }
+        <div class="actions">
+          <button type="submit" class="primary">
+            {{ saving() ? 'Guardando…' : 'Guardar pago' }}</button
+          ><button type="button" (click)="cancelar()">Cancelar</button>
+        </div>
+      </fieldset>
+    </form>
+  </section>
 </section>

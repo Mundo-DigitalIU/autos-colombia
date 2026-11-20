@@ -5,12 +5,14 @@
       <h1 id="pagos-title">Pagos</h1>
       <p>Consulta el estado de la mensualidad de cada vehículo y los pagos registrados.</p>
     </div>
+    <a class="button-link primary" routerLink="/panel/pagos/registrar">Registrar pago</a>
   </header>
-  <div role="tablist" aria-label="Pagos">
+  <div class="tabs" role="tablist" aria-label="Pagos">
     <button
       type="button"
       role="tab"
       id="tab-mensualidades"
+      aria-controls="panel-pagos"
       [attr.aria-selected]="pestana() === 'mensualidades'"
       (click)="pestana.set('mensualidades')"
     >
@@ -20,11 +22,18 @@
       type="button"
       role="tab"
       id="tab-registrados"
+      aria-controls="panel-pagos"
       [attr.aria-selected]="pestana() === 'registrados'"
       (click)="pestana.set('registrados')"
     >
       Pagos registrados
     </button>
   </div>
-  <div role="tabpanel" [attr.aria-labelledby]="'tab-' + pestana()"></div>
+  <div role="tabpanel" id="panel-pagos" [attr.aria-labelledby]="'tab-' + pestana()">
+    @if (pestana() === 'mensualidades') {
+      <app-mensualidades />
+    } @else {
+      <app-pagos-registrados />
+    }
+  </div>
 </section>

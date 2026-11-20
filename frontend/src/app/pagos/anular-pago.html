@@ -1,0 +1,44 @@
+<section
+  class="panel confirmation"
+  role="alertdialog"
+  aria-labelledby="anular-pago-title"
+  aria-describedby="anular-pago-resumen"
+>
+  <h2 id="anular-pago-title">Anular el pago {{ pago().id }}</h2>
+  <dl class="resumen" id="anular-pago-resumen">
+    <dt>Placa</dt>
+    <dd>{{ pago().placa }}</dd>
+    <dt>Cliente</dt>
+    <dd>{{ pago().cliente_nombre }}</dd>
+    <dt>Valor</dt>
+    <dd>{{ pesos(pago().valor) }}</dd>
+    <dt>Vigencia</dt>
+    <dd>{{ fecha(pago().vigencia_desde) }} - {{ fecha(pago().vigencia_hasta) }}</dd>
+  </dl>
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+  <form (submit)="$event.preventDefault(); anular()" novalidate>
+    <fieldset [disabled]="saving()">
+      <legend class="sr-only">Anulación del pago</legend>
+      <div class="field">
+        <label for="anular-motivo">Motivo de la anulación</label>
+        <textarea
+          id="anular-motivo"
+          rows="3"
+          maxlength="500"
+          [formControl]="motivo"
+          [attr.aria-invalid]="!!errorMotivo()"
+          aria-describedby="anular-motivo-error"
+        ></textarea>
+        <span class="field-error" id="anular-motivo-error">{{ errorMotivo() }}</span>
+      </div>
+      <div class="actions">
+        <button type="button" (click)="cancelar()">Cancelar</button
+        ><button type="submit" class="danger">
+          {{ saving() ? 'Anulando…' : 'Anular pago' }}
+        </button>
+      </div>
+    </fieldset>
+  </form>
+</section>

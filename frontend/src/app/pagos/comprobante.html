@@ -4,5 +4,50 @@
       <span class="eyebrow">MENSUALIDADES</span>
       <h1 id="comprobante-title">Comprobante de pago</h1>
     </div>
+    <a class="button-link" routerLink="/panel/pagos">Volver a pagos</a>
   </header>
+  @if (aviso()) {
+    <p class="notice success" role="status">{{ aviso() }}</p>
+  }
+  @if (loading()) {
+    <p class="empty" role="status">Cargando comprobante…</p>
+  } @else if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  } @else if (pago(); as p) {
+    <section class="panel comprobante" aria-label="Comprobante">
+      @if (p.estado === 'ANULADO') {
+        <div class="franja-anulado" role="status">
+          <strong>ANULADO</strong>
+          <p>Motivo: {{ p.motivo_anulacion }}</p>
+          <p>Anulado por {{ p.anulado_por }} el {{ fechaHora(p.anulado_en) }}.</p>
+        </div>
+      }
+      <dl class="resumen">
+        <dt>Número</dt>
+        <dd>{{ p.id }}</dd>
+        <dt>Fecha y hora del pago</dt>
+        <dd>{{ fechaHora(p.fecha_pago) }}</dd>
+        <dt>Cliente</dt>
+        <dd>{{ p.cliente_nombre }}</dd>
+        <dt>Documento</dt>
+        <dd>{{ p.cliente_documento }}</dd>
+        <dt>Placa</dt>
+        <dd>{{ p.placa }}</dd>
+        <dt>Tipo de vehículo</dt>
+        <dd>{{ p.tipo }}</dd>
+        <dt>Valor</dt>
+        <dd>{{ pesos(p.valor) }}</dd>
+        <dt>Medio de pago</dt>
+        <dd>{{ p.medio_pago }}</dd>
+        <dt>Vigencia desde</dt>
+        <dd>{{ fecha(p.vigencia_desde) }}</dd>
+        <dt>Vigencia hasta</dt>
+        <dd>{{ fecha(p.vigencia_hasta) }}</dd>
+        <dt>Registrado por</dt>
+        <dd>{{ p.registrado_por }}</dd>
+        <dt>Estado</dt>
+        <dd>{{ p.estado === 'ANULADO' ? 'Anulado' : 'Registrado' }}</dd>
+      </dl>
+    </section>
+  }
 </section>
