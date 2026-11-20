@@ -16,6 +16,8 @@ from app.routers.operadores import router as operadores_router
 from app.services.operador import OperadorError
 from app.routers.estancias import router as estancias_router
 from app.services.estancia import EstanciaError
+from app.routers.pagos import router as pagos_router
+from app.services.pago import PagoError
 
 app = FastAPI(title="Autos Colombia API")
 # Todas las rutas exigen sesión salvo POST /auth/login y GET /health.
@@ -26,6 +28,7 @@ app.include_router(operadores_router, dependencies=[SoloAdministrador])
 app.include_router(estancias_router, dependencies=[CualquierRol])
 app.include_router(cuentas_router, dependencies=[SoloAdministrador])
 app.include_router(clientes_router, dependencies=[CualquierRol])
+app.include_router(pagos_router, dependencies=[CualquierRol])
 
 
 @app.exception_handler(VehiculoError)
@@ -35,7 +38,8 @@ app.include_router(clientes_router, dependencies=[CualquierRol])
 @app.exception_handler(AuthError)
 @app.exception_handler(CuentaError)
 @app.exception_handler(ClienteError)
-async def entity_error_handler(request, error: VehiculoError | CeldaError | OperadorError | EstanciaError | AuthError | CuentaError | ClienteError) -> JSONResponse:
+@app.exception_handler(PagoError)
+async def entity_error_handler(request, error: VehiculoError | CeldaError | OperadorError | EstanciaError | AuthError | CuentaError | ClienteError | PagoError) -> JSONResponse:
     return JSONResponse(status_code=error.status_code, content={"detail": error.detail})
 
 
